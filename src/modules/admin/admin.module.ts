@@ -6,6 +6,7 @@ import { PaymentTransactionModule } from './payment-transaction/payment-transact
 import { UserModule } from './user/user.module';
 import { NotificationModule } from './notification/notification.module';
 import { CarWashStationModule } from './car-wash-station/car-wash-station.module';
+import { ServiceModule } from './service/service.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CarWashStationModule } from './car-wash-station/car-wash-station.module
     UserModule,
     NotificationModule,
     CarWashStationModule,
+    ServiceModule,
   ],
 })
 export class AdminModule { }

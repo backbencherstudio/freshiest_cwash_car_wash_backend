@@ -78,6 +78,7 @@ export default () => ({
     attachment: '/attachment/',
     // main
     carWashStation: '/car-wash-station/',
+    service: '/service/',
   },
 
   defaultUser: {
