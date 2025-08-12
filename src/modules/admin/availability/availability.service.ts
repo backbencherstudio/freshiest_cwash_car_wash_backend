@@ -40,7 +40,6 @@ export class AvailabilityService {
             car_wash_station_id: true,
             createdAt: true,
             updatedAt: true,
-            user: true,
             time_slots: {
               select: {
                 id: true,

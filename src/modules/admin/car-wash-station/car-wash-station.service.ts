@@ -66,6 +66,8 @@ export class CarWashStationService {
           name: true,
           description: true,
           image: true,
+          rating: true,
+          reviewCount: true,
           pricePerWash: true,
           location: true,
           latitude: true,
@@ -102,6 +104,11 @@ export class CarWashStationService {
 
   async findOne(id: string) {
     try {
+      // Get today's date in ISO format, ensuring the time portion is set to midnight (UTC)
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);  // Set time to 00:00:00.000 UTC
+      const todayISOString = today.toISOString();  // This will return the full ISO string (with time)
+
       const carWashStation = await this.prisma.carWashStation.findUnique({
         where: { id },
         select: {
@@ -113,6 +120,8 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
+          rating: true,
+          reviewCount: true,
           createdAt: true,
           user: {
             select: {
@@ -122,20 +131,37 @@ export class CarWashStationService {
               avatar: true,
             }
           },
-          // availabilities: {
-          //   select: {
-          //     id: true,
-          //     day: true,
-          //     date: true,
-          //     time_slots: {
-          //       select: {
-          //         id: true,
-          //         start_time: true,
-          //         end_time: true,
-          //       }
-          //     }
-          //   }
-          // }
+          services: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+            }
+          },
+          availabilities: {
+            where: {
+              date: todayISOString,  // Use the full ISO DateTime format for today
+            },
+            select: {
+              id: true,
+              day: true,
+              date: true,
+              time_slots: {
+                select: {
+                  id: true,
+                  start_time: true,
+                  end_time: true,
+                }
+              }
+            }
+          },
+          reviews: {
+            select: {
+              id: true,
+              rating: true,
+              comment: true,
+            }
+          }
         },
       });
 

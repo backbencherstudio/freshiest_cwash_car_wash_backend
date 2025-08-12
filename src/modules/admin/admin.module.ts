@@ -10,6 +10,8 @@ import { ServiceModule } from './service/service.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { VoucherModule } from './voucher/voucher.module';
 import { BookingModule } from './booking/booking.module';
+import { ReviewModule } from './review/review.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { BookingModule } from './booking/booking.module';
     AvailabilityModule,
     VoucherModule,
     BookingModule,
+    ReviewModule,
+    DashboardModule,
   ],
 })
 export class AdminModule { }
