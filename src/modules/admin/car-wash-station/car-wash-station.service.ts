@@ -10,7 +10,7 @@ import { StringHelper } from 'src/common/helper/string.helper';
 export class CarWashStationService {
   constructor(private prisma: PrismaService) { }
 
-  async create(createCarWashStationDto: CreateCarWashStationDto, file: Express.Multer.File) {
+  async create(createCarWashStationDto: CreateCarWashStationDto, file: Express.Multer.File, userId: string) {
     try {
       if (file) {
         const fileName = StringHelper.generateRandomFileName(file.originalname);
@@ -21,6 +21,7 @@ export class CarWashStationService {
       const carWashStation = await this.prisma.carWashStation.create({
         data: {
           ...createCarWashStationDto,
+          user_id: userId,
         },
         select: {
           id: true,
@@ -113,12 +114,39 @@ export class CarWashStationService {
           latitude: true,
           longitude: true,
           createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            }
+          },
+          // availabilities: {
+          //   select: {
+          //     id: true,
+          //     day: true,
+          //     date: true,
+          //     time_slots: {
+          //       select: {
+          //         id: true,
+          //         start_time: true,
+          //         end_time: true,
+          //       }
+          //     }
+          //   }
+          // }
         },
       });
 
       if (carWashStation && carWashStation.image) {
         carWashStation['image_url'] = SojebStorage.url(
           appConfig().storageUrl.carWashStation + carWashStation.image,
+        );
+      }
+      if (carWashStation && carWashStation.user && carWashStation.user.avatar) {
+        carWashStation.user['avatar_url'] = SojebStorage.url(
+          appConfig().storageUrl.avatar + carWashStation.user.avatar,
         );
       }
 

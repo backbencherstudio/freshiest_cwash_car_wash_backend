@@ -18,6 +18,7 @@ export class AvailabilityService {
       if (availabilityData.date) {
         try {
           availabilityData.date = new Date(availabilityData.date).toISOString();
+          availabilityData.day = new Date(availabilityData.date).toLocaleDateString('en-US', { weekday: 'long' });
         } catch (error) {
           return {
             success: false,
@@ -114,6 +115,7 @@ export class AvailabilityService {
             if (availabilityData.date) {
               try {
                 availabilityData.date = new Date(availabilityData.date).toISOString();
+                availabilityData.day = new Date(availabilityData.date).toLocaleDateString('en-US', { weekday: 'long' });
               } catch (error) {
                 errors.push({
                   data: availabilityDto,
@@ -312,6 +314,106 @@ export class AvailabilityService {
       return {
         success: false,
         message: `Error fetching availability: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+  * Get available time slots for a specific date and car wash station
+  */
+  async getAvailableTimeSlots(bookingDate: string, carWashStationId: string) {
+    try {
+      const requestedDate = new Date(bookingDate);
+      const requestedDay = requestedDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const startOfDay = new Date(requestedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(requestedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Get all time slots for the car wash station on the requested day
+      const availableTimeSlots = await this.prisma.timeSlot.findMany({
+        where: {
+          availability: {
+            car_wash_station_id: carWashStationId,
+            day: requestedDay
+          }
+        },
+        include: {
+          availability: {
+            select: {
+              date: true,
+              day: true
+            }
+          }
+        },
+        orderBy: {
+          start_time: 'asc'
+        }
+      });
+
+      if (availableTimeSlots.length === 0) {
+        return {
+          success: false,
+          message: `No time slots available for ${requestedDay} at this car wash station.`,
+          data: {
+            requested_date: requestedDate,
+            day_of_week: requestedDay,
+            available_slots: []
+          }
+        };
+      }
+
+      // Check which time slots are already booked
+      const bookedTimeSlots = await this.prisma.booking.findMany({
+        where: {
+          car_wash_station_id: carWashStationId,
+          bookingDate: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          status: {
+            notIn: ['cancelled', 'rejected']
+          }
+        },
+        select: {
+          time_slot_id: true,
+          status: true,
+          bookingDate: true,
+        }
+      });
+
+      const bookedTimeSlotIds = bookedTimeSlots.map(booking => booking.time_slot_id);
+
+      // Filter out booked time slots
+      const freeTimeSlots = availableTimeSlots.filter(
+        timeSlot => !bookedTimeSlotIds.includes(timeSlot.id)
+      );
+
+      return {
+        success: true,
+        message: `Found ${freeTimeSlots.length} available time slots for ${requestedDay}`,
+        data: {
+          requested_date: requestedDate,
+          day_of_week: requestedDay,
+          total_available_slots: availableTimeSlots.length,
+          booked_slots: bookedTimeSlots.length,
+          available_slots: freeTimeSlots.map(slot => ({
+            id: slot.id,
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            is_available: true
+          })),
+          booked_slots_details: bookedTimeSlots.map(booking => ({
+            time_slot_id: booking.time_slot_id,
+            status: booking.status,
+            booking_date: booking.bookingDate
+          }))
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Error getting available time slots: ${error.message}`,
       };
     }
   }

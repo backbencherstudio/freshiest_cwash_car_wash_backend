@@ -27,6 +27,15 @@ export class AvailabilityController {
     return this.availabilityService.findAll(searchQuery);
   }
 
+  @Get('time-slots')
+  getAvailableTimeSlots(
+    @Query('bookingDate') bookingDate: string,
+    @Query('carWashStationId') carWashStationId: string,
+    @Req() req: any,
+  ) {
+    return this.availabilityService.getAvailableTimeSlots(bookingDate, carWashStationId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.availabilityService.findOne(id);

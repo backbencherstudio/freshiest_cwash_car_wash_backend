@@ -11,6 +11,7 @@ export class CreateTimeSlotDto {
 
 export class CreateAvailabilityDto {
   @IsString()
+  @IsOptional()
   day: string;
 
   @IsISO8601()

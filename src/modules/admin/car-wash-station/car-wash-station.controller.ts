@@ -10,6 +10,7 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  Req,
 } from '@nestjs/common';
 import { CarWashStationService } from './car-wash-station.service';
 import { CreateCarWashStationDto } from './dto/create-car-wash-station.dto';
@@ -26,15 +27,19 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class CarWashStationController {
   constructor(private readonly carWashStationService: CarWashStationService) { }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.WASHER)
   @ApiOperation({ summary: 'Create a new car wash station' })
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   async create(
     @Body() createCarWashStationDto: CreateCarWashStationDto,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
   ) {
     try {
-      const carWashStation = await this.carWashStationService.create(createCarWashStationDto, file);
+      const userId = req.user?.userId;
+      const carWashStation = await this.carWashStationService.create(createCarWashStationDto, file, userId);
       return carWashStation;
     } catch (error) {
       return {
@@ -73,6 +78,8 @@ export class CarWashStationController {
     }
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.WASHER)
   @ApiOperation({ summary: 'Update a car wash station' })
   @Patch(':id')
   @UseInterceptors(FileInterceptor('image'))
@@ -92,6 +99,8 @@ export class CarWashStationController {
     }
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.WASHER)
   @ApiOperation({ summary: 'Delete a car wash station' })
   @Delete(':id')
   async remove(@Param('id') id: string) {

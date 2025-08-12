@@ -7,6 +7,9 @@ import { UserModule } from './user/user.module';
 import { NotificationModule } from './notification/notification.module';
 import { CarWashStationModule } from './car-wash-station/car-wash-station.module';
 import { ServiceModule } from './service/service.module';
+import { AvailabilityModule } from './availability/availability.module';
+import { VoucherModule } from './voucher/voucher.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { ServiceModule } from './service/service.module';
     NotificationModule,
     CarWashStationModule,
     ServiceModule,
+    AvailabilityModule,
+    VoucherModule,
+    BookingModule,
   ],
 })
 export class AdminModule { }

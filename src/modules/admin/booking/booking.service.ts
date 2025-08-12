@@ -10,158 +10,205 @@ export class BookingService {
     constructor(private prisma: PrismaService) { }
 
     async create(createBookingDto: CreateBookingDto, user_id: string) {
-        const transaction = await this.prisma.$transaction(async (prisma) => {
-          try {
+        try {
             // Ensure bookingDate is properly formatted for Prisma
             if (createBookingDto.bookingDate) {
-              createBookingDto.bookingDate = new Date(createBookingDto.bookingDate).toISOString();
+                createBookingDto.bookingDate = new Date(createBookingDto.bookingDate).toISOString();
             } else {
-              const timeSlot = await prisma.timeSlot.findFirst({
-                where: { id: createBookingDto.time_slot_id },
-                select: { availability: { select: { date: true } } }
-              });
-              createBookingDto.bookingDate = timeSlot.availability.date.toISOString();
+                const timeSlot = await this.prisma.timeSlot.findFirst({
+                    where: { id: createBookingDto.time_slot_id },
+                    select: { availability: { select: { date: true } } }
+                });
+                createBookingDto.bookingDate = timeSlot.availability.date.toISOString();
             }
-    
+
             // Check if the service belongs to a car wash station and set car wash station ID
             if (createBookingDto.service_id) {
-              const service = await prisma.service.findUnique({
-                where: { id: createBookingDto.service_id },
-                select: { car_wash_station_id: true }
-              });
-              if (service.car_wash_station_id) {
-                createBookingDto.car_wash_station_id = service.car_wash_station_id;
-              }
+                const service = await this.prisma.service.findUnique({
+                    where: { id: createBookingDto.service_id },
+                    select: { car_wash_station_id: true }
+                });
+                if (service.car_wash_station_id) {
+                    createBookingDto.car_wash_station_id = service.car_wash_station_id;
+                }
             }
-    
+
             // Check if the time slot is available
             const timeSlotAvailability = await this.checkTimeSlotAvailability(
-              createBookingDto.time_slot_id,
-              createBookingDto.bookingDate,
-              createBookingDto.car_wash_station_id
+                createBookingDto.time_slot_id,
+                createBookingDto.bookingDate,
+                createBookingDto.car_wash_station_id
             );
-    
+
             if (!timeSlotAvailability.success) {
-              throw new Error(timeSlotAvailability.message);
+                return timeSlotAvailability;
             }
-    
+
             // Calculate total amount with service price and voucher discount
             const totalAmount = await this.calculateTotalAmount(
-              createBookingDto.service_id,
-              createBookingDto.voucher_code
+                createBookingDto.service_id,
+                createBookingDto.voucher_code
             );
-    
+
             if (!totalAmount.success) {
-              throw new Error(totalAmount.message);
+                return totalAmount;
             }
-    
-            // Create booking transaction
-            const booking = await prisma.booking.create({
-              data: {
-                user: { connect: { id: user_id } },
-                service: { connect: { id: createBookingDto.service_id } },
-                car_wash_station: { connect: { id: createBookingDto.car_wash_station_id } },
-                time_slot: { connect: { id: createBookingDto.time_slot_id } },
-                carType: createBookingDto.carType,
-                bookingDate: createBookingDto.bookingDate,
-                total_amount: totalAmount.data.total_amount,
-                status: createBookingDto.status,
-                payment_status: createBookingDto.payment_status,
-                payment_raw_status: createBookingDto.payment_raw_status,
-                paid_amount: createBookingDto.paid_amount,
-                paid_currency: createBookingDto.paid_currency,
-                payment_provider: createBookingDto.payment_provider,
-                payment_reference_number: createBookingDto.payment_reference_number,
-                payment_provider_charge_type: createBookingDto.payment_provider_charge_type,
-                payment_provider_charge: createBookingDto.payment_provider_charge,
-              },
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    billing_id: true,
-                  },
+
+            // Create booking
+            const booking = await this.prisma.booking.create({
+                data: {
+                    user: { connect: { id: user_id } },
+                    service: { connect: { id: createBookingDto.service_id } },
+                    car_wash_station: { connect: { id: createBookingDto.car_wash_station_id } },
+                    time_slot: { connect: { id: createBookingDto.time_slot_id } },
+                    carType: createBookingDto.carType,
+                    bookingDate: createBookingDto.bookingDate,
+                    total_amount: totalAmount.data.total_amount,
+                    status: createBookingDto.status,
+                    payment_status: createBookingDto.payment_status,
+                    payment_raw_status: createBookingDto.payment_raw_status,
+                    paid_amount: createBookingDto.paid_amount,
+                    paid_currency: createBookingDto.paid_currency,
+                    payment_provider: createBookingDto.payment_provider,
+                    payment_reference_number: createBookingDto.payment_reference_number,
+                    payment_provider_charge_type: createBookingDto.payment_provider_charge_type,
+                    payment_provider_charge: createBookingDto.payment_provider_charge,
                 },
-              },
+                select: {
+                    id: true,
+                    user_id: true,
+                    service_id: true,
+                    car_wash_station_id: true,
+                    time_slot_id: true,
+                    carType: true,
+                    bookingDate: true,
+                    total_amount: true,
+                    status: true,
+                    payment_status: true,
+                    payment_raw_status: true,
+                    paid_amount: true,
+                    paid_currency: true,
+                    payment_provider: true,
+                    payment_reference_number: true,
+                    payment_provider_charge_type: true,
+                    payment_provider_charge: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            avatar: true,
+                            billing_id: true,
+                        },
+                    },
+                    service: {
+                        select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            price: true,
+                        },
+                    },
+                    car_wash_station: {
+                        select: {
+                            id: true,
+                            name: true,
+                            location: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    },
+                    time_slot: {
+                        select: {
+                            id: true,
+                            start_time: true,
+                            end_time: true,
+                        },
+                    },
+                },
             });
-    
+
             // Create Stripe PaymentIntent
             let paymentIntent;
             try {
-              let customerId = booking.user.billing_id;
-              if (!customerId) {
-                const customer = await StripePayment.createCustomer({
-                  user_id: booking.user.id,
-                  name: booking.user.name || 'Unknown',
-                  email: booking.user.email || '',
+                let customerId = booking.user.billing_id;
+                if (!customerId) {
+                    const customer = await StripePayment.createCustomer({
+                        user_id: booking.user.id,
+                        name: booking.user.name || 'Unknown',
+                        email: booking.user.email || '',
+                    });
+                    customerId = customer.id;
+
+                    // Update user with Stripe customer ID
+                    await this.prisma.user.update({
+                        where: { id: booking.user.id },
+                        data: { billing_id: customerId },
+                    });
+                }
+
+                paymentIntent = await StripePayment.createPaymentIntent({
+                    amount: Number(booking.total_amount), // Convert Decimal to number
+                    currency: 'usd',
+                    customer_id: customerId,
+                    metadata: {
+                        bookingId: booking.id,
+                        userId: booking.user.id,
+                        bookingDate: booking.bookingDate.toISOString(),
+                        time_slot_id: booking.time_slot_id,
+                        service_id: booking.service_id,
+                    },
                 });
-                customerId = customer.id;
-    
-                // Update user with Stripe customer ID
-                await prisma.user.update({
-                  where: { id: booking.user.id },
-                  data: { billing_id: customerId },
-                });
-              }
-    
-              paymentIntent = await StripePayment.createPaymentIntent({
-                amount: Number(booking.total_amount), 
-                currency: 'usd',
-                customer_id: customerId,
-                metadata: {
-                  bookingId: booking.id,
-                  userId: booking.user.id,
-                  bookingDate: booking.bookingDate.toISOString(),
-                  time_slot_id: booking.time_slot_id,
-                  service_id: booking.service_id,
-                },
-              });
             } catch (stripeError) {
-              console.error('Error creating Stripe payment intent:', stripeError);
+                console.error('Error creating Stripe payment intent:', stripeError);
             }
-    
+
             // Create PaymentTransaction record if payment intent was created
             if (paymentIntent) {
-              try {
-                await TransactionRepository.createTransaction({
-                  booking_id: booking.id,
-                  user_id: user_id,
-                  amount: Number(booking.total_amount),
-                  currency: 'usd',
-                  reference_number: paymentIntent.id,
-                  status: 'pending',
-                });
-              } catch (transactionError) {
-                console.error('Error creating payment transaction:', transactionError);
-              }
+                try {
+                    await TransactionRepository.createTransaction({
+                        booking_id: booking.id,
+                        user_id: user_id,
+                        amount: Number(booking.total_amount),
+                        currency: 'usd',
+                        reference_number: paymentIntent.id,
+                        status: 'pending',
+                    });
+                } catch (transactionError) {
+                    console.error('Error creating payment transaction:', transactionError);
+                }
             }
-    
+
             return {
-              success: true,
-              message: 'Booking created successfully',
-              data: {
-                ...booking,
-                payment_intent: paymentIntent ? {
-                  id: paymentIntent.id,
-                  client_secret: paymentIntent.client_secret,
-                  amount: paymentIntent.amount,
-                  currency: paymentIntent.currency,
-                  status: paymentIntent.status
-                } : null,
-                note: paymentIntent ? 'Payment intent created successfully' : 'Payment intent creation failed, but booking was created'
-              },
+                success: true,
+                message: 'Booking created successfully',
+                data: {
+                    ...booking,
+                    payment_intent: paymentIntent ? {
+                        id: paymentIntent.id,
+                        client_secret: paymentIntent.client_secret,
+                        amount: paymentIntent.amount,
+                        currency: paymentIntent.currency,
+                        status: paymentIntent.status
+                    } : null,
+                    note: paymentIntent ? 'Payment intent created successfully' : 'Payment intent creation failed, but booking was created'
+                },
             };
-          } catch (error) {
+        } catch (error) {
             return {
-              success: false,
-              message: `Error creating booking: ${error.message}`,
+                success: false,
+                message: `Error creating booking: ${error.message}`,
             };
-          }
-        });
-        return transaction;
-      }
+        }
+    }
+
 
     async findAll(searchQuery: string | null, userId: string) {
         try {
@@ -333,7 +380,6 @@ export class BookingService {
                             name: true,
                             email: true,
                             avatar: true,
-                            phone_number: true,
                         },
                     },
                     service: {

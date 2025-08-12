@@ -13,14 +13,27 @@ export class TransactionRepository {
     currency,
     reference_number,
     status = 'pending',
+    user_id,
   }: {
     booking_id: string;
     amount?: number;
     currency?: string;
     reference_number?: string;
     status?: string;
+    user_id?: string;
   }) {
-    const data = {};
+    const data: any = {};
+    const booking = await prisma.booking.findUnique({
+      where: {
+        id: booking_id,
+      },
+    });
+    if (!booking) {
+      return {
+        success: false,
+        message: 'Booking not found',
+      };
+    }
     if (booking_id) {
       data['booking_id'] = booking_id;
     }
@@ -36,11 +49,21 @@ export class TransactionRepository {
     if (status) {
       data['status'] = status;
     }
-    return await prisma.paymentTransaction.create({
-      data: {
-        ...data,
-      },
-    });
+    if (user_id) {
+      data['user_id'] = user_id;
+    }
+
+    // Set default type for booking payments
+    data['type'] = 'booking';
+
+    try {
+      return await prisma.paymentTransaction.create({
+        data: data,
+      });
+    } catch (error) {
+      console.error('Error creating payment transaction:', error);
+      throw error;
+    }
   }
 
   /**

@@ -74,6 +74,12 @@ export class ServiceService {
           image: true,
           createdAt: true,
           updatedAt: true,
+          car_wash_station: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
         },
       });
 
@@ -115,11 +121,21 @@ export class ServiceService {
           image: true,
           createdAt: true,
           updatedAt: true,
+          car_wash_station: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          }
         },
       });
 
       if (service && service.image) {
         service['image_url'] = SojebStorage.url(appConfig().storageUrl.service + service.image);
+      }
+      if (service && service.car_wash_station && service.car_wash_station.image) {
+        service.car_wash_station['station_image_url'] = SojebStorage.url(appConfig().storageUrl.carWashStation + service.car_wash_station.image);
       }
 
       return {
