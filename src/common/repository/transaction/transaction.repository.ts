@@ -102,23 +102,32 @@ export class TransactionRepository {
       order_data['payment_raw_status'] = raw_status;
     }
 
-    const paymentTransaction = await prisma.paymentTransaction.findMany({
-      where: {
-        reference_number: reference_number,
-      },
-    });
 
-    // update booking status
-    // if (paymentTransaction.length > 0) {
-    //   await prisma.order.update({
-    //     where: {
-    //       id: paymentTransaction[0].order_id,
-    //     },
-    //     data: {
-    //       ...order_data,
-    //     },
-    //   });
-    // }
+    try {
+      const transaction = await prisma.paymentTransaction.findFirst({
+        where: { reference_number: reference_number },
+        include: { booking: true }
+      });
+
+      if (transaction?.booking_id) {
+        // Update booking payment status to succeeded
+        await prisma.booking.update({
+          where: { id: transaction.booking_id },
+          data: {
+            payment_status: 'succeeded',
+            paid_amount: paid_amount,
+            paid_currency: paid_currency
+          }
+        });
+
+        console.log('Booking payment status updated to succeeded for booking:', transaction.booking_id);
+      } else {
+        console.error('No booking found for payment intent:', reference_number);
+      }
+    } catch (error) {
+      console.error('Error updating booking status or calculating commissions:', error);
+    }
+
 
     return await prisma.paymentTransaction.updateMany({
       where: {
