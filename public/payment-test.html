@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Wash Booking - Payment Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f0f4f8;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      input,
+      select,
+      #card-element {
+        width: 100%;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+      }
+      input:focus,
+      select:focus,
+      #card-element:focus {
+        outline: none;
+        border-color: #4caf50;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .loading {
+        text-align: center;
+        display: none;
+        margin-top: 20px;
+      }
+      .error,
+      .success {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Car Wash Booking</h1>
+      <form id="booking-form">
+        <div>
+          <label for="service_id">Service ID</label>
+          <input
+            type="text"
+            id="service_id"
+            name="service_id"
+            required
+            placeholder="e.g., cme427ig10001ws6ce6o16ztx"
+          />
+        </div>
+        <div>
+          <label for="time_slot_id">Time Slot ID</label>
+          <input
+            type="text"
+            id="time_slot_id"
+            name="time_slot_id"
+            required
+            placeholder="e.g., cme7xdpk3000rwsik3ivsrj53"
+          />
+        </div>
+        <div>
+          <label for="carType">Car Type</label>
+          <select id="carType" name="carType" required>
+            <option value="">Select Car Type</option>
+            <option value="Sedan">Sedan</option>
+            <option value="SUV">SUV</option>
+            <option value="Truck">Truck</option>
+            <option value="Van">Van</option>
+            <option value="Hatchback">Hatchback</option>
+          </select>
+        </div>
+        <div>
+          <label for="voucher_code">Voucher Code (Optional)</label>
+          <input
+            type="text"
+            id="voucher_code"
+            name="voucher_code"
+            placeholder="e.g., SAVE20"
+          />
+        </div>
+        <div>
+          <label for="jwt_token">JWT Token</label>
+          <input
+            type="text"
+            id="jwt_token"
+            name="jwt_token"
+            required
+            placeholder="Enter JWT Token here"
+          />
+        </div>
+
+        <!-- Stripe Elements Card Element -->
+        <div>
+          <label for="card-element">Credit or Debit Card</label>
+          <div id="card-element"></div>
+          <!-- Stripe Card Element will be inserted here -->
+        </div>
+
+        <button type="submit" id="submitBtn">Create Booking & Pay</button>
+      </form>
+
+      <div class="loading" id="loading">
+        <p>Creating booking and processing payment...</p>
+      </div>
+
+      <div id="payment-result"></div>
+    </div>
+
+    <script>
+      const stripe = Stripe(
+        'pk_test_51RgIDjGbZdiSzPj89wef1vxHaK0jRa4fAUcYFU1KT1mhNBvhgmfwmUWLwaLuV8YEqpae9XdgIwi3cAwHaQ0bxniz00QSaaPJgY',
+      ); // Replace with your public key
+      const elements = stripe.elements(); // Initialize Stripe Elements
+
+      // Create an instance of the card element
+      const card = elements.create('card');
+      card.mount('#card-element'); // Mount the card input element to the div with id 'card-element'
+
+      // Handle form submission
+      document
+        .getElementById('booking-form')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+
+          // Show loading message
+          document.getElementById('loading').style.display = 'block';
+
+          const formData = new FormData(event.target);
+          const bookingData = {
+            service_id: formData.get('service_id'),
+            time_slot_id: formData.get('time_slot_id'),
+            carType: formData.get('carType'),
+            voucher_code: formData.get('voucher_code'),
+            jwt_token: formData.get('jwt_token'),
+          };
+
+          try {
+            // Step 1: Call the backend to create booking and generate payment intent
+            const response = await fetch('http://localhost:5001/api/booking', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${bookingData.jwt_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                service_id: bookingData.service_id,
+                time_slot_id: bookingData.time_slot_id,
+                carType: bookingData.carType,
+                voucher_code: bookingData.voucher_code,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              // Step 2: Confirm the payment with Stripe using the payment intent
+              const { client_secret } = result.data.payment_intent;
+
+              // Handle the Stripe payment confirmation
+              const { error, paymentIntent } = await stripe.confirmCardPayment(
+                client_secret,
+                {
+                  payment_method: {
+                    card: card, // Collect card details using Stripe Elements
+                  },
+                },
+              );
+
+              if (error) {
+                document.getElementById('payment-result').innerHTML =
+                  `<div class="error">Error: ${error.message}</div>`;
+              } else if (paymentIntent.status === 'succeeded') {
+                document.getElementById('payment-result').innerHTML = `
+            <div class="success">
+              <h3>Payment Successful!</h3>
+              <p>Booking ID: ${result.data.id}</p>
+              <p>Amount: $${(paymentIntent.amount / 100).toFixed(2)}</p>
+            </div>
+          `;
+              }
+            } else {
+              document.getElementById('payment-result').innerHTML =
+                `<div class="error">Error: ${result.message}</div>`;
+            }
+          } catch (error) {
+            document.getElementById('payment-result').innerHTML =
+              `<div class="error">Error: ${error.message}</div>`;
+          } finally {
+            document.getElementById('loading').style.display = 'none';
+          }
+        });
+    </script>
+  </body>
+</html>

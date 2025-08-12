@@ -85,6 +85,7 @@ model User {
   availabilities       Availability[]
   review               Review[]
   booking              Booking[]
+  car_wash_station     CarWashStation[]
 
   @@map("users")
 }
@@ -238,8 +239,9 @@ model PaymentTransaction {
   user_id String?
   user    User?   @relation(fields: [user_id], references: [id])
 
-  order_id         String?
-  type             String?  @default("order")
+  booking_id       String?
+  booking          Booking? @relation(fields: [booking_id], references: [id])
+  type             String?  @default("booking")
   withdraw_via     String?  @default("wallet")
   provider         String?
   reference_number String?
@@ -440,22 +442,25 @@ model UserSetting {
 
 // car wash station table
 model CarWashStation {
-  id              String     @id @default(cuid())
-  name            String
-  description     String
-  image           String? // URL for the image of the station
-  rating          Float      @default(0) // Average rating
-  reviewCount     Int        @default(0) // Total reviews
-  pricePerWash    Float      @default(0)
-  location        String // e.g., 'Tampan, Pekanbaru'
-  latitude        Float // Latitude of the car wash station
-  longitude       Float // Longitude of the car wash station
-  services        Service[] // List of services offered at this station
-  available_times TimeSlot[] // List of available times for each day
-  reviews         Review[] // List of reviews for the station
-  bookings        Booking[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id             String         @id @default(cuid())
+  name           String
+  description    String
+  status         String         @default("active")
+  image          String? // URL for the image of the station
+  rating         Float          @default(0) // Average rating
+  reviewCount    Int            @default(0) // Total reviews
+  pricePerWash   Float          @default(0)
+  location       String // e.g., 'Tampan, Pekanbaru'
+  latitude       Float // Latitude of the car wash station
+  longitude      Float // Longitude of the car wash station
+  user_id        String?
+  user           User?          @relation(fields: [user_id], references: [id])
+  services       Service[] // List of services offered at this station
+  availabilities Availability[] // List of availability for the station
+  reviews        Review[] // List of reviews for the station
+  bookings       Booking[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 // service table
@@ -475,27 +480,31 @@ model Service {
 
 // time slot table
 model TimeSlot {
-  id                  String          @id @default(cuid())
-  availability_id     String
-  time                String // e.g., '09:00 AM'
-  availability        Availability    @relation(fields: [availability_id], references: [id])
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  car_wash_station_id String?
-  car_wash_station    CarWashStation? @relation(fields: [car_wash_station_id], references: [id])
-  bookings            Booking[]
+  id              String       @id @default(cuid())
+  availability_id String
+  start_time      String // e.g., '09.00 AM'
+  end_time        String // e.g., '10.00 AM'
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  bookings        Booking[]
 }
 
 // availability table
 model Availability {
-  id        String     @id @default(cuid())
-  user_id   String
-  day       String // e.g. 'Monday', 'Tuesday', etc.
-  date      DateTime // Specific date for the availability
-  timeSlots TimeSlot[] // Multiple time slots per day
-  user      User       @relation(fields: [user_id], references: [id])
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id      String   @id @default(cuid())
+  day     String // e.g. 'Monday', 'Tuesday', etc.
+  date    DateTime // Specific date for the availability
+  user_id String
+  user    User     @relation(fields: [user_id], references: [id])
+
+  car_wash_station_id String
+  car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
+
+  time_slots TimeSlot[] // Multiple time slots per day
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // review table
@@ -513,17 +522,16 @@ model Review {
 
 // booking table
 model Booking {
-  id                       String   @id @default(cuid())
+  id                       String    @id @default(cuid())
   user_id                  String
   service_id               String
   car_wash_station_id      String
   time_slot_id             String
-  carType                  String // e.g., 'Sedan', 'SUV', 'Truck'
-  serviceType              String // e.g., 'Medium', 'Regular', 'Special'
-  bookingDate              DateTime
+  carType                  String? // e.g., 'Sedan', 'SUV', 'Truck'
+  bookingDate              DateTime?
   total_amount             Decimal?
-  status                   String // e.g., 'Pending', 'Completed', 'Cancelled'
-  payment_status           String?  @default("pending")
+  status                   String    @default("pending") // e.g., 'Pending', 'Completed', 'Cancelled'
+  payment_status           String?   @default("pending")
   // raw information from payment provider
   // raw status from payment provider
   payment_raw_status       String?
@@ -536,14 +544,15 @@ model Booking {
   // e.g. stripe payment reference id
   payment_reference_number String?
 
-  payment_provider_charge_type String?        @default("percentage") // e.g. fixed, percentage
+  payment_provider_charge_type String?              @default("percentage") // e.g. fixed, percentage
   payment_provider_charge      Decimal? // e.g. stripe payment provider charge
-  user                         User           @relation(fields: [user_id], references: [id])
-  service                      Service        @relation(fields: [service_id], references: [id])
-  car_wash_station             CarWashStation @relation(fields: [car_wash_station_id], references: [id])
-  time_slot                    TimeSlot       @relation(fields: [time_slot_id], references: [id])
-  createdAt                    DateTime       @default(now())
-  updatedAt                    DateTime       @updatedAt
+  user                         User                 @relation(fields: [user_id], references: [id])
+  service                      Service              @relation(fields: [service_id], references: [id])
+  car_wash_station             CarWashStation       @relation(fields: [car_wash_station_id], references: [id])
+  time_slot                    TimeSlot             @relation(fields: [time_slot_id], references: [id])
+  payment_transactions         PaymentTransaction[]
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
 }
 
 model Voucher {
