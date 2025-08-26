@@ -3,6 +3,8 @@ import { AvailabilityService } from './availability.service';
 import { CreateAvailabilityDto, CreateBulkAvailabilityDto } from './dto/create-availability.dto';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { Roles } from 'src/common/guard/role/roles.decorator';
+import { Role } from 'src/common/guard/role/role.enum';
 
 
 @UseGuards(JwtAuthGuard)
@@ -10,12 +12,14 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) { }
 
+  @Roles(Role.WASHER)
   @Post()
   create(@Body() createAvailabilityDto: CreateAvailabilityDto, @Req() req: any) {
     const user_id = req.user?.userId;
     return this.availabilityService.create(createAvailabilityDto, user_id);
   }
 
+  @Roles(Role.WASHER)
   @Post('bulk')
   createBulk(@Body() createBulkAvailabilityDto: CreateBulkAvailabilityDto, @Req() req: any) {
     const user_id = req.user?.userId;
@@ -41,6 +45,7 @@ export class AvailabilityController {
     return this.availabilityService.findOne(id);
   }
 
+  @Roles(Role.WASHER, Role.ADMIN)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -49,6 +54,7 @@ export class AvailabilityController {
     return this.availabilityService.update(id, updateAvailabilityDto);
   }
 
+  @Roles(Role.WASHER, Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.availabilityService.remove(id);
