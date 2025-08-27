@@ -37,45 +37,47 @@ export class CarWashStationController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
-    try {
-      const userId = req.user?.userId;
-      const carWashStation = await this.carWashStationService.create(createCarWashStationDto, file, userId);
-      return carWashStation;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+    const userId = req.user?.userId;
+    const carWashStation = await this.carWashStationService.create(createCarWashStationDto, file, userId);
+    return carWashStation;
   }
 
   @ApiOperation({ summary: 'Read all car wash stations' })
   @Get()
-  async findAll(@Query() query: { q?: string }) {
-    try {
-      const searchQuery = query.q;
-      const carWashStations = await this.carWashStationService.findAll(searchQuery);
-      return carWashStations;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
+  async findAll(@Query() query: {
+    q?: string,
+    lat?: string,
+    lng?: string,
+    radius?: string,
+    order?: string,
+    page?: string,
+    limit?: string
+  }) {
+    const searchQuery = query.q;
+    const lat = parseFloat(query.lat) || null;
+    const lng = parseFloat(query.lng) || null;
+    const radius = parseFloat(query.radius) || 10; // Default 10km radius
+    const order = query.order || 'name'; // Default order by name
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 50;
 
+    const carWashStations = await this.carWashStationService.findAll({
+      searchQuery,
+      lat,
+      lng,
+      radius,
+      order,
+      page,
+      limit
+    });
+    return carWashStations;
+  }
+  
   @ApiOperation({ summary: 'Read one car wash station' })
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    try {
-      const carWashStation = await this.carWashStationService.findOne(id);
-      return carWashStation;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+    const carWashStation = await this.carWashStationService.findOne(id);
+    return carWashStation;
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -88,15 +90,8 @@ export class CarWashStationController {
     @Body() updateCarWashStationDto: UpdateCarWashStationDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    try {
-      const carWashStation = await this.carWashStationService.update(id, updateCarWashStationDto, file);
-      return carWashStation;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+    const carWashStation = await this.carWashStationService.update(id, updateCarWashStationDto, file);
+    return carWashStation;
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -104,14 +99,7 @@ export class CarWashStationController {
   @ApiOperation({ summary: 'Delete a car wash station' })
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    try {
-      const carWashStation = await this.carWashStationService.remove(id);
-      return carWashStation;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+    const carWashStation = await this.carWashStationService.remove(id);
+    return carWashStation;
   }
 }

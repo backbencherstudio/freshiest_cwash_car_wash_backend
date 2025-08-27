@@ -267,6 +267,77 @@ export class AvailabilityService {
     }
   }
 
+  async availableToday() {
+    try {
+      // Get today's date in ISO format, ensuring the time portion is set to midnight (UTC)
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);  // Set time to 00:00:00.000 UTC
+      const todayISOString = today.toISOString();  // This will return the full ISO string (with time)
+
+      const carWashStations = await this.prisma.carWashStation.findMany({
+        where: {
+          availabilities: {
+            some: {
+              date: todayISOString,
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          image: true,
+          rating: true,
+          location: true,
+          latitude: true,
+          longitude: true,
+          createdAt: true,
+          availabilities: {
+            where: {
+              date: todayISOString,
+            },
+            select: {
+              id: true,
+              day: true,
+              date: true,
+              time_slots: {
+                select: {
+                  id: true,
+                  start_time: true,
+                  end_time: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Add file URLs
+      if (carWashStations && carWashStations.length > 0) {
+        for (const record of carWashStations) {
+          if (record.image) {
+            record['image_url'] = SojebStorage.url(
+              appConfig().storageUrl.carWashStation + record.image,
+            );
+          }
+        }
+      }
+
+      return {
+        success: true,
+        message: carWashStations.length
+          ? 'Available car wash stations for today retrieved successfully'
+          : 'No car wash stations available today',
+        data: carWashStations,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Error fetching available car wash stations: ${error.message}`,
+      };
+    }
+  }
+
   async findOne(id: string) {
     try {
       const availability = await this.prisma.availability.findUnique({

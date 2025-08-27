@@ -5,10 +5,39 @@ import { UpdateCarWashStationDto } from './dto/update-car-wash-station.dto';
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 import appConfig from 'src/config/app.config';
 import { StringHelper } from 'src/common/helper/string.helper';
+import { date } from 'zod';
+
+interface FindAllParams {
+  searchQuery?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  order?: string;
+  page?: number;
+  limit?: number;
+}
 
 @Injectable()
 export class CarWashStationService {
   constructor(private prisma: PrismaService) { }
+
+  // Helper function to calculate distance between two coordinates using Haversine formula
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLng = this.deg2rad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return Math.round(distance * 100) / 100; // Round to 2 decimal places
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
 
   async create(createCarWashStationDto: CreateCarWashStationDto, file: Express.Multer.File, userId: string) {
     try {
@@ -49,8 +78,10 @@ export class CarWashStationService {
     }
   }
 
-  async findAll(searchQuery: string | null) {
+  async findAll(params: FindAllParams) {
     try {
+      const { searchQuery, lat, lng, radius, order, page, limit } = params;
+
       const whereClause = {};
       if (searchQuery) {
         whereClause['OR'] = [
@@ -59,7 +90,18 @@ export class CarWashStationService {
         ];
       }
 
-      const carWashStations = await this.prisma.carWashStation.findMany({
+      // Get total count for pagination
+      const total = await this.prisma.carWashStation.count({
+        where: whereClause,
+      });
+
+      // Calculate pagination values
+      const totalPages = Math.ceil(total / limit);
+      const hasNextPage = page < totalPages;
+      const hasPreviousPage = page > 1;
+      const skip = (page - 1) * limit;
+
+      let carWashStations = await this.prisma.carWashStation.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -74,9 +116,11 @@ export class CarWashStationService {
           longitude: true,
           createdAt: true,
         },
+        skip: skip,
+        take: limit,
       });
 
-      // Add file URLs
+      // Add file URLs and calculate distance if coordinates provided
       if (carWashStations && carWashStations.length > 0) {
         for (const record of carWashStations) {
           if (record.image) {
@@ -84,6 +128,25 @@ export class CarWashStationService {
               appConfig().storageUrl.carWashStation + record.image,
             );
           }
+
+          // Calculate distance if user coordinates are provided
+          if (lat !== null && lng !== null && record.latitude && record.longitude) {
+            const distance = this.calculateDistance(lat, lng, record.latitude, record.longitude);
+            record['distance'] = distance;
+            record['distanceUnit'] = 'km';
+          }
+        }
+
+        // Sort by distance if coordinates provided and order is 'distance'
+        if (lat !== null && lng !== null && order === 'distance') {
+          carWashStations = carWashStations.sort((a, b) => (a['distance'] || 0) - (b['distance'] || 0));
+        }
+
+        // Filter by radius if coordinates and radius provided
+        if (lat !== null && lng !== null && radius) {
+          carWashStations = carWashStations.filter(station => {
+            return !station['distance'] || station['distance'] <= radius;
+          });
         }
       }
 
@@ -93,6 +156,14 @@ export class CarWashStationService {
           ? 'Car wash stations retrieved successfully'
           : 'No car wash stations found',
         data: carWashStations,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPage,
+          hasPreviousPage,
+        },
       };
     } catch (error) {
       return {
@@ -136,6 +207,7 @@ export class CarWashStationService {
               id: true,
               name: true,
               price: true,
+              image: true,
             }
           },
           availabilities: {
@@ -174,6 +246,15 @@ export class CarWashStationService {
         carWashStation.user['avatar_url'] = SojebStorage.url(
           appConfig().storageUrl.avatar + carWashStation.user.avatar,
         );
+        if (carWashStation.services && carWashStation.services.length > 0) {
+          for (const service of carWashStation.services) {
+            if (service.image) {
+              service['image_url'] = SojebStorage.url(
+                appConfig().storageUrl.service + service.image,
+              );
+            }
+          }
+        }
       }
 
       return {
