@@ -31,6 +31,13 @@ export class AvailabilityController {
     return this.availabilityService.findAll(searchQuery);
   }
 
+  @Get('available-today')
+  async availableToday() {
+    const carWashStations = await this.availabilityService.availableToday();
+    return carWashStations;
+  }
+
+
   @Get('time-slots')
   getAvailableTimeSlots(
     @Query('bookingDate') bookingDate: string,

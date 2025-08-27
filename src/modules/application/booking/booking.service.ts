@@ -4,6 +4,8 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { StripePayment } from 'src/common/lib/Payment/stripe/StripePayment';
 import { TransactionRepository } from 'src/common/repository/transaction/transaction.repository';
+import appConfig from 'src/config/app.config';
+import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 
 @Injectable()
 export class BookingService {
@@ -212,106 +214,136 @@ export class BookingService {
 
     async findAll(searchQuery: string | null, userId: string) {
         try {
-          const whereClause: any = {};
-      
-          // If user_id is provided, check user type and filter accordingly
-          if (userId) {
-            const userDetails = await this.prisma.user.findUnique({
-              where: { id: userId },
-              select: { type: true, car_wash_station: { select: { id: true } } },
-            });
-      
-            if (userDetails) {
-              switch (userDetails.type) {
-                case 'washer':
-                  // Washers can see all bookings for their car wash stations
-                  if (userDetails.car_wash_station && Array.isArray(userDetails.car_wash_station) && userDetails.car_wash_station.length > 0) {
-                    whereClause.car_wash_station_id = { in: userDetails.car_wash_station.map((station: { id: string }) => station.id) };
-                  } else{
-                    whereClause.user_id = userId;
-                  }
-                  break;
-                case 'user':
-                  // Regular users can only see their own bookings
-                  whereClause.user_id = userId;
-                  break;
-                case 'admin':
-                  // Admins can see all bookings (no filter applied)
-                  break;
-                default:
-                  // For any other type, restrict to own bookings
-                  whereClause.user_id = userId;
-                  break;
-              }
+            const whereClause: any = {};
+
+            // If user_id is provided, check user type and filter accordingly
+            if (userId) {
+                const userDetails = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { type: true, car_wash_station: { select: { id: true } } },
+                });
+
+                if (userDetails) {
+                    switch (userDetails.type) {
+                        case 'washer':
+                            // Washers can see all bookings for their car wash stations
+                            if (userDetails.car_wash_station && Array.isArray(userDetails.car_wash_station) && userDetails.car_wash_station.length > 0) {
+                              const carWashStationIds = userDetails.car_wash_station.map((station: { id: string }) => station.id);
+                                whereClause.car_wash_station_id = { in: carWashStationIds };
+                            } else 
+                            {
+                                whereClause.user_id = userId;
+                            }
+                            break;
+                        case 'user':
+                            // Regular users can only see their own bookings
+                            whereClause.user_id = userId;
+                            break;
+                        case 'admin':
+                            // Admins can see all bookings (no filter applied)
+                            break;
+                        default:
+                            // For any other type, restrict to own bookings
+                            whereClause.user_id = userId;
+                            break;
+                    }
+                }
             }
-          }
-        
-      
-          // Add search functionality for fields: carType, status, payment_status, etc.
-          if (searchQuery) {
-            whereClause['OR'] = [
-              { carType: { contains: searchQuery, mode: 'insensitive' } },
-              { status: { contains: searchQuery, mode: 'insensitive' } },
-              { payment_status: { contains: searchQuery, mode: 'insensitive' } },
-              { user: { name: { contains: searchQuery, mode: 'insensitive' } } },
-              { user: { email: { contains: searchQuery, mode: 'insensitive' } } },
-              { car_wash_station: { name: { contains: searchQuery, mode: 'insensitive' } } },
-            ];
-          }
-      
-          // Fetch the bookings based on the whereClause
-          const bookings = await this.prisma.booking.findMany({
-            where: whereClause,
-            select: {
-              id: true,
-              user_id: true,
-              service_id: true,
-              car_wash_station_id: true,
-              time_slot_id: true,
-              carType: true,
-              bookingDate: true,
-              total_amount: true,
-              status: true,
-              payment_status: true,
-              paid_amount: true,
-              createdAt: true,
-              user: {
+
+
+            // Add search functionality for fields: carType, status, payment_status, etc.
+            if (searchQuery) {
+                whereClause['OR'] = [
+                    { carType: { contains: searchQuery, mode: 'insensitive' } },
+                    { status: { contains: searchQuery, mode: 'insensitive' } },
+                    { payment_status: { contains: searchQuery, mode: 'insensitive' } },
+                    { user: { name: { contains: searchQuery, mode: 'insensitive' } } },
+                    { user: { email: { contains: searchQuery, mode: 'insensitive' } } },
+                    { car_wash_station: { name: { contains: searchQuery, mode: 'insensitive' } } },
+                ];
+            }
+
+            // Fetch the bookings based on the whereClause
+            const bookings = await this.prisma.booking.findMany({
+                where: whereClause,
                 select: {
-                  name: true,
-                  email: true,
-                  avatar: true,
+                    id: true,
+                    user_id: true,
+                    service_id: true,
+                    car_wash_station_id: true,
+                    time_slot_id: true,
+                    carType: true,
+                    bookingDate: true,
+                    total_amount: true,
+                    status: true,
+                    payment_status: true,
+                    paid_amount: true,
+                    createdAt: true,
+                    car_wash_station: {
+                        select: {
+                            name: true,
+                            image: true,
+                            location:true
+                        },
+                    },
+                    user: {
+                        select: {
+                            name: true,
+                            email: true,
+                            avatar: true,
+                        },
+                    },
+                    service: {
+                        select: {
+                            name: true,
+                            description: true,
+                            price: true,
+                            image: true,
+                        },
+                    },
+                    time_slot: {
+                        select: {
+                            start_time: true,
+                            end_time: true,
+                        },
+                    },
                 },
-              },
-              service: {
-                select: {
-                  name: true,
-                  description: true,
-                  price: true,
-                },
-              },
-              time_slot: {
-                select: {
-                  start_time: true,
-                  end_time: true,
-                },
-              },
-            },
-            orderBy: { createdAt: 'desc' },
-          });
-      
-          return {
-            success: true,
-            message: bookings.length > 0 ? 'Bookings retrieved successfully' : 'No bookings found',
-            data: bookings,
-          };
+                orderBy: { createdAt: 'desc' },
+            });
+
+            if (bookings.length > 0) {
+
+                for (const booking of bookings) {
+                    if (booking.car_wash_station.image) {
+                        booking.car_wash_station['image_url'] = SojebStorage.url(
+                            appConfig().storageUrl.carWashStation + booking.car_wash_station.image,
+                        );
+                    }
+                    if (booking.user.avatar) {
+                        booking.user['avatar_url'] = SojebStorage.url(
+                            appConfig().storageUrl.avatar + booking.user.avatar,
+                        );
+                    }
+                    if (booking.service.image) {
+                        booking.service['image_url'] = SojebStorage.url(
+                            appConfig().storageUrl.service + booking.service.image,
+                        );
+                    }
+                }
+            }
+
+            return {
+                success: true,
+                message: bookings.length > 0 ? 'Bookings retrieved successfully' : 'No bookings found',
+                data: bookings,
+            };
         } catch (error) {
-          return {
-            success: false,
-            message: `Error fetching bookings: ${error.message}`,
-          };
+            return {
+                success: false,
+                message: `Error fetching bookings: ${error.message}`,
+            };
         }
-      }
-      
+    }
 
     async findOne(id: string, userId: string) {
         try {
