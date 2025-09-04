@@ -86,6 +86,7 @@ model User {
   review               Review[]
   booking              Booking[]
   car_wash_station     CarWashStation[]
+  availability_rules   AvailabilityRule[]
 
   @@map("users")
 }
@@ -442,25 +443,27 @@ model UserSetting {
 
 // car wash station table
 model CarWashStation {
-  id             String         @id @default(cuid())
-  name           String
-  description    String
-  status         String         @default("active")
-  image          String? // URL for the image of the station
-  rating         Float          @default(0) // Average rating
-  reviewCount    Int            @default(0) // Total reviews
-  pricePerWash   Float          @default(0)
-  location       String // e.g., 'Tampan, Pekanbaru'
-  latitude       Float // Latitude of the car wash station
-  longitude      Float // Longitude of the car wash station
-  user_id        String?
-  user           User?          @relation(fields: [user_id], references: [id])
-  services       Service[] // List of services offered at this station
-  availabilities Availability[] // List of availability for the station
-  reviews        Review[] // List of reviews for the station
-  bookings       Booking[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id           String  @id @default(cuid())
+  name         String
+  description  String
+  status       String  @default("active")
+  image        String? // URL for the image of the station
+  rating       Float   @default(0) // Average rating
+  reviewCount  Int     @default(0) // Total reviews
+  pricePerWash Float   @default(0)
+  location     String // e.g., 'Tampan, Pekanbaru'
+  latitude     Float // Latitude of the car wash station
+  longitude    Float // Longitude of the car wash station
+  user_id      String?
+  user         User?   @relation(fields: [user_id], references: [id])
+
+  services           Service[] // List of services offered at this station
+  availabilities     Availability[] // List of availability for the station
+  reviews            Review[] // List of reviews for the station
+  bookings           Booking[]
+  availability_rules AvailabilityRule[]
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
 }
 
 // service table
@@ -473,21 +476,10 @@ model Service {
   image               String?
   car_wash_station_id String
   car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  bookings            Booking[]
-}
 
-// time slot table
-model TimeSlot {
-  id              String       @id @default(cuid())
-  availability_id String
-  start_time      String // e.g., '09.00 AM'
-  end_time        String // e.g., '10.00 AM'
-  availability    Availability @relation(fields: [availability_id], references: [id])
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  bookings        Booking[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  bookings   Booking[]
 }
 
 // availability table
@@ -501,37 +493,80 @@ model Availability {
   car_wash_station_id String
   car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
 
-  time_slots TimeSlot[] // Multiple time slots per day
+  // snapshot of the rule used for this date (optional)
+  opening_time          String?
+  closing_time          String?
+  slot_duration_minutes Int?
+  is_closed             Boolean @default(false) // full-day closure flag
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  time_slots TimeSlot[] // Multiple time slots per day
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  @@unique([date, car_wash_station_id])
 }
 
-// review table
-model Review {
+model TimeSlot {
+  id              String       @id @default(cuid())
+  availability_id String
+  start_time      String // e.g., '09.00 AM'
+  end_time        String // e.g., '10.00 AM'
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  capacity        Int          @default(1) // number of parallel washes allowed in this slot
+  is_blocked      Boolean      @default(false)
+  block_reason    String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@unique([availability_id, start_time, end_time])
+  @@index([availability_id, start_time])
+}
+
+// Selectable days for recurring rules
+enum DayOfWeek {
+  SUN
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+}
+
+// Owner-defined weekly template to generate dated Availabilities
+model AvailabilityRule {
   id                  String         @id @default(cuid())
   user_id             String
-  car_wash_station_id String
-  rating              Int // Rating out of 5 stars (1-5)
-  comment             String?
   user                User           @relation(fields: [user_id], references: [id])
+  car_wash_station_id String
   car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+
+  opening_time          String
+  closing_time          String
+  slot_duration_minutes Int
+  days_open             DayOfWeek[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("availability_rules")
 }
 
 // booking table
 model Booking {
-  id                       String    @id @default(cuid())
+  id                       String   @id @default(cuid())
   user_id                  String
   service_id               String
   car_wash_station_id      String
   time_slot_id             String
   carType                  String? // e.g., 'Sedan', 'SUV', 'Truck'
-  bookingDate              DateTime?
+  bookingDate              DateTime
   total_amount             Decimal?
-  status                   String    @default("pending") // e.g., 'Pending', 'Completed', 'Cancelled'
-  payment_status           String?   @default("pending")
+  status                   String   @default("pending") // e.g., 'Pending', 'Completed', 'Cancelled'
+  payment_status           String?  @default("pending")
   // raw information from payment provider
   // raw status from payment provider
   payment_raw_status       String?
@@ -551,9 +586,14 @@ model Booking {
   car_wash_station             CarWashStation       @relation(fields: [car_wash_station_id], references: [id])
   time_slot                    TimeSlot             @relation(fields: [time_slot_id], references: [id])
   payment_transactions         PaymentTransaction[]
-  createdAt                    DateTime             @default(now())
-  updatedAt                    DateTime             @updatedAt
+  created_at                   DateTime             @default(now())
+  updated_at                   DateTime             @updatedAt
+
+  // Prevent double booking for the same time slot
+  @@unique([time_slot_id])
 }
+
+// Removed schedule rule feature; station owners define daily Availability directly.
 
 model Voucher {
   id                  String   @id @default(cuid())
@@ -561,6 +601,19 @@ model Voucher {
   discount_percentage Float // e.g., 20 for 20% off
   is_active           Boolean  @default(true)
   expiryDate          DateTime // e.g., '2022-12-31'
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+}
+
+// review table
+model Review {
+  id                  String         @id @default(cuid())
+  user_id             String
+  car_wash_station_id String
+  rating              Int // Rating out of 5 stars (1-5)
+  comment             String?
+  user                User           @relation(fields: [user_id], references: [id])
+  car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @updatedAt
 }

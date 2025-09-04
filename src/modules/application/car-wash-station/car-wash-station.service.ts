@@ -61,7 +61,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          createdAt: true,
+          created_at: true,
         },
       });
 
@@ -114,7 +114,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          createdAt: true,
+          created_at: true,
         },
         skip: skip,
         take: limit,
@@ -193,7 +193,7 @@ export class CarWashStationService {
           longitude: true,
           rating: true,
           reviewCount: true,
-          createdAt: true,
+          created_at: true,
           user: {
             select: {
               id: true,
@@ -303,7 +303,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          createdAt: true,
+          created_at: true,
         },
       });
 
