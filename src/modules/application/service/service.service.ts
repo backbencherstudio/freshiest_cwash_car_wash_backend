@@ -30,8 +30,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -72,8 +72,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           car_wash_station: {
             select: {
               id: true,
@@ -119,8 +119,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           car_wash_station: {
             select: {
               id: true,
@@ -180,8 +180,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 

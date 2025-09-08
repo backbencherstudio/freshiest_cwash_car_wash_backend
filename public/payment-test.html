@@ -180,7 +180,7 @@
 
           try {
             // Step 1: Call the backend to create booking and generate payment intent
-            const response = await fetch('http://localhost:5001/api/booking', {
+            const response = await fetch('http://localhost:4000/api/booking', {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${bookingData.jwt_token}`,
