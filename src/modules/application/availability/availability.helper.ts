@@ -64,18 +64,36 @@ export class AvailabilityHelper {
     /**
      * Convert day name to DayOfWeek enum format
      * @param dayName - Full day name (e.g., "MONDAY")
-     * @returns DayOfWeek enum value (e.g., "MON")
+     * @returns DayOfWeek enum value (e.g., DayOfWeek.MONDAY)
      */
-    static convertDayNameToEnum(dayName: string): string {
+    static convertDayNameToEnum(dayName: string): any {
         switch (dayName.toUpperCase()) {
-            case 'SUNDAY': return 'SUN';
-            case 'MONDAY': return 'MON';
-            case 'TUESDAY': return 'TUE';
-            case 'WEDNESDAY': return 'WED';
-            case 'THURSDAY': return 'THU';
-            case 'FRIDAY': return 'FRI';
-            case 'SATURDAY': return 'SAT';
-            default: return dayName;
+            case 'SUNDAY': return 'SUNDAY';
+            case 'MONDAY': return 'MONDAY';
+            case 'TUESDAY': return 'TUESDAY';
+            case 'WEDNESDAY': return 'WEDNESDAY';
+            case 'THURSDAY': return 'THURSDAY';
+            case 'FRIDAY': return 'FRIDAY';
+            case 'SATURDAY': return 'SATURDAY';
+            default: throw new Error(`Invalid day name: ${dayName}`);
+        }
+    }
+
+    /**
+     * Convert DayOfWeek enum value to day name
+     * @param dayEnum - DayOfWeek enum value (e.g., 2)
+     * @returns Full day name (e.g., "MONDAY")
+     */
+    static convertEnumToDayName(dayEnum: number): string {
+        switch (dayEnum) {
+            case 1: return 'SUNDAY';
+            case 2: return 'MONDAY';
+            case 3: return 'TUESDAY';
+            case 4: return 'WEDNESDAY';
+            case 5: return 'THURSDAY';
+            case 6: return 'FRIDAY';
+            case 7: return 'SATURDAY';
+            default: throw new Error(`Invalid day enum: ${dayEnum}`);
         }
     }
 

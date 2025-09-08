@@ -1,16 +1,6 @@
 import { IsString, IsDateString, IsOptional, IsArray, ValidateNested, IsISO8601, IsInt, IsBoolean, Min, Max, IsEnum } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-
-// Day of week enum matching the Prisma schema
-export enum DayOfWeek {
-  SUN = 'SUN',
-  MON = 'MON',
-  TUE = 'TUE',
-  WED = 'WED',
-  THU = 'THU',
-  FRI = 'FRI',
-  SAT = 'SAT',
-}
+import { DayOfWeek } from '@prisma/client';
 
 export class CreateAvailabilityDto {
   @IsString()

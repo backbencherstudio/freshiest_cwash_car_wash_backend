@@ -52,7 +52,7 @@ export class AvailabilityService {
       }
       const dayEnum = AvailabilityHelper.convertDayNameToEnum((createAvailabilityDto.day || '').toUpperCase());
       // If the day is not allowed by the rule, block creation
-      if (!rule.days_open.includes(dayEnum as any)) {
+      if (!rule.days_open.includes(dayEnum)) {
         return {
           success: false,
           message: `Cannot create availability for ${createAvailabilityDto.day}. This day is closed by the station rules.`,
@@ -229,10 +229,28 @@ export class AvailabilityService {
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);  // Set time to 00:00:00.000 UTC
       const todayISOString = today.toISOString();  // This will return the full ISO string (with time)
+      const todayDayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+      // If user is a washer, restrict results to their own stations
+      let stationOwnerFilter: any = {};
+      if (user_id) {
+        try {
+          const userTypeRecord = await this.prisma.user.findUnique({
+            where: { id: user_id },
+            select: { type: true },
+          });
+          if (userTypeRecord?.type?.toLowerCase() === 'washer') {
+            stationOwnerFilter = { user_id: user_id };
+          }
+        } catch (_) {
+          // ignore filter if user lookup fails
+        }
+      }
 
       // First, check if any car wash stations need availability created for today
       if (user_id) {
         const allStations = await this.prisma.carWashStation.findMany({
+          where: stationOwnerFilter,
           select: {
             id: true,
             name: true,
@@ -254,26 +272,33 @@ export class AvailabilityService {
               const defaultRule = await this.prisma.availabilityRule.findFirst({
                 where: { car_wash_station_id: station.id },
                 orderBy: { created_at: 'desc' },
+                select: {
+                  opening_time: true,
+                  closing_time: true,
+                  slot_duration_minutes: true,
+                  days_open: true
+                },
               });
 
-              // Use default rule settings or fallback to standard business hours
-              const defaultSettings = defaultRule ? {
-                opening_time: defaultRule.opening_time,
-                closing_time: defaultRule.closing_time,
-                slot_duration_minutes: defaultRule.slot_duration_minutes,
-              } : {
-                opening_time: '08:00 AM',
-                closing_time: '10:00 PM',
-                slot_duration_minutes: 60,
-              };
+              if (!defaultRule) {
+                // No rule configured; skip auto-creation
+                continue;
+              }
 
-              // Create new availability for today
+              // Validate today's day against rule
+              const dayEnum = AvailabilityHelper.convertDayNameToEnum(todayDayName);
+              if (!defaultRule.days_open.includes(dayEnum)) {
+                // Today is closed according to rule; skip auto-creation
+                continue;
+              }
+
+              // Use rule settings for auto-creation
               const newAvailabilityDto = {
                 date: todayISOString,
                 car_wash_station_id: station.id,
-                opening_time: defaultSettings.opening_time,
-                closing_time: defaultSettings.closing_time,
-                slot_duration_minutes: defaultSettings.slot_duration_minutes,
+                opening_time: defaultRule.opening_time,
+                closing_time: defaultRule.closing_time,
+                slot_duration_minutes: defaultRule.slot_duration_minutes,
                 is_closed: false,
               };
 
@@ -288,6 +313,7 @@ export class AvailabilityService {
 
       const carWashStations = await this.prisma.carWashStation.findMany({
         where: {
+          ...stationOwnerFilter,
           availabilities: {
             some: {
               date: todayISOString,
@@ -346,12 +372,105 @@ export class AvailabilityService {
         }
       }
 
+      // Get user information and recent booking history if user_id is provided
+      let userInfo = null;
+      let recentBookings = null;
+
+      if (user_id) {
+        try {
+          // Get user information
+          userInfo = await this.prisma.user.findUnique({
+            where: { id: user_id },
+            select: {
+              id: true,
+              name: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              phone_number: true,
+              avatar: true,
+              created_at: true,
+            },
+          });
+
+          // Add user avatar URL if available
+          if (userInfo && userInfo.avatar) {
+            userInfo['avatar_url'] = SojebStorage.url(
+              appConfig().storageUrl.avatar + userInfo.avatar,
+            );
+          }
+
+          // Get recent booking history (last 5 bookings)
+          recentBookings = await this.prisma.booking.findMany({
+            where: { user_id: user_id },
+            orderBy: { created_at: 'desc' },
+            take: 5,
+            select: {
+              id: true,
+              carType: true,
+              bookingDate: true,
+              status: true,
+              payment_status: true,
+              total_amount: true,
+              created_at: true,
+              service: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  image: true,
+                },
+              },
+              car_wash_station: {
+                select: {
+                  id: true,
+                  name: true,
+                  location: true,
+                  image: true,
+                },
+              },
+              time_slot: {
+                select: {
+                  id: true,
+                  start_time: true,
+                  end_time: true,
+                },
+              },
+            },
+          });
+
+          // Add service and station image URLs
+          if (recentBookings && recentBookings.length > 0) {
+            for (const booking of recentBookings) {
+              if (booking.service.image) {
+                booking.service['image_url'] = SojebStorage.url(
+                  appConfig().storageUrl.service + booking.service.image,
+                );
+              }
+              if (booking.car_wash_station.image) {
+                booking.car_wash_station['image_url'] = SojebStorage.url(
+                  appConfig().storageUrl.carWashStation + booking.car_wash_station.image,
+                );
+              }
+            }
+          }
+        } catch (userError) {
+          console.error('Error fetching user information:', userError);
+          // Continue without user info if there's an error
+        }
+      }
+
       return {
         success: true,
         message: carWashStations.length
           ? 'Available car wash stations for today retrieved successfully'
           : 'No car wash stations available today',
-        data: carWashStations,
+        data: {
+          user: userInfo,
+          stations: carWashStations,
+          recent_bookings: recentBookings,
+        },
         auto_creation_attempted: !!user_id,
       };
     } catch (error) {
@@ -462,7 +581,7 @@ export class AvailabilityService {
           } else {
             // Validate requested day against rule
             const dayEnum = AvailabilityHelper.convertDayNameToEnum(requestedDay.toUpperCase());
-            if (defaultRule.days_open.includes(dayEnum as any)) {
+            if (defaultRule.days_open.includes(dayEnum)) {
               // Create new availability using the create method with rule settings
               const newAvailabilityDto = {
                 date: requestedDate.toISOString(),
@@ -853,11 +972,11 @@ export class AvailabilityService {
           try {
             const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
 
-            // Convert day name to enum format (e.g., 'MONDAY' -> 'MON')
+            // Convert day name to enum format (e.g., 'MONDAY' -> 2)
             const dayEnum = AvailabilityHelper.convertDayNameToEnum(dayOfWeek);
 
             // Check if this day is open according to the rule
-            if (!rule.days_open.includes(dayEnum as any)) {
+            if (!rule.days_open.includes(dayEnum)) {
               continue; // Skip closed days
             }
 
@@ -1059,7 +1178,7 @@ export class AvailabilityService {
       // Normalize optional days_open if provided (convert full names to enum codes)
       let nextDaysOpen = existingRule.days_open;
       if (Array.isArray(body.days_open) && body.days_open.length > 0) {
-        nextDaysOpen = body.days_open.map((d: any) => AvailabilityHelper.convertDayNameToEnum(String(d).toUpperCase())) as any;
+        nextDaysOpen = body.days_open.map((d: any) => AvailabilityHelper.convertDayNameToEnum(String(d).toUpperCase()));
       }
 
       // Update the rule
@@ -1123,7 +1242,7 @@ export class AvailabilityService {
             },
           });
 
-          const isOpenDay = (updatedRule.days_open as any).includes(dayEnum as any);
+          const isOpenDay = updatedRule.days_open.includes(dayEnum);
 
           if (!isOpenDay) {
             // If no booked slots remain, delete the availability entirely; else mark closed
