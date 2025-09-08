@@ -527,13 +527,13 @@ model TimeSlot {
 
 // Selectable days for recurring rules
 enum DayOfWeek {
-  SUN
-  MON
-  TUE
-  WED
-  THU
-  FRI
-  SAT
+  SUNDAY    @map("1")
+  MONDAY    @map("2")
+  TUESDAY   @map("3")
+  WEDNESDAY @map("4")
+  THURSDAY  @map("5")
+  FRIDAY    @map("6")
+  SATURDAY  @map("7")
 }
 
 // Owner-defined weekly template to generate dated Availabilities

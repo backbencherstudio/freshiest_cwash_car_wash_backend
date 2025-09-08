@@ -19,9 +19,17 @@ export class BookingService {
             } else {
                 const timeSlot = await this.prisma.timeSlot.findFirst({
                     where: { id: createBookingDto.time_slot_id },
-                    select: { availability: { select: { date: true } } }
+                    select: { availability: { select: { date: true, id: true } } },
                 });
-                createBookingDto.bookingDate = timeSlot.availability.date.toISOString();
+
+                if (!timeSlot || !timeSlot.availability) {
+                    return {
+                        success: false,
+                        message: 'Invalid time_slot_id or availability not found',
+                    };
+                }
+
+                createBookingDto.bookingDate = new Date(timeSlot.availability.date).toISOString();
             }
 
             // Check if the service belongs to a car wash station and set car wash station ID
@@ -94,8 +102,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,
@@ -228,10 +236,9 @@ export class BookingService {
                         case 'washer':
                             // Washers can see all bookings for their car wash stations
                             if (userDetails.car_wash_station && Array.isArray(userDetails.car_wash_station) && userDetails.car_wash_station.length > 0) {
-                              const carWashStationIds = userDetails.car_wash_station.map((station: { id: string }) => station.id);
+                                const carWashStationIds = userDetails.car_wash_station.map((station: { id: string }) => station.id);
                                 whereClause.car_wash_station_id = { in: carWashStationIds };
-                            } else 
-                            {
+                            } else {
                                 whereClause.user_id = userId;
                             }
                             break;
@@ -278,19 +285,24 @@ export class BookingService {
                     status: true,
                     payment_status: true,
                     paid_amount: true,
-                    createdAt: true,
+                    created_at: true,
+                    time_slot: {
+                        select: {
+                            start_time: true,
+                            end_time: true,
+                            availability: {
+                                select: {
+                                    date: true,
+                                    day: true,
+                                },
+                            },
+                        },
+                    },
                     car_wash_station: {
                         select: {
                             name: true,
                             image: true,
-                            location:true
-                        },
-                    },
-                    user: {
-                        select: {
-                            name: true,
-                            email: true,
-                            avatar: true,
+                            location: true
                         },
                     },
                     service: {
@@ -301,14 +313,15 @@ export class BookingService {
                             image: true,
                         },
                     },
-                    time_slot: {
+                    user: {
                         select: {
-                            start_time: true,
-                            end_time: true,
+                            name: true,
+                            email: true,
+                            avatar: true,
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { created_at: 'desc' },
             });
 
             if (bookings.length > 0) {
@@ -404,8 +417,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,
@@ -614,8 +627,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,
@@ -788,8 +801,8 @@ export class BookingService {
                     total_amount: true,
                     status: true,
                     payment_status: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,
@@ -818,7 +831,7 @@ export class BookingService {
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { created_at: 'desc' },
             });
 
             return {
@@ -892,8 +905,8 @@ export class BookingService {
                     total_amount: true,
                     status: true,
                     payment_status: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,

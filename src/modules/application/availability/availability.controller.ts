@@ -8,11 +8,11 @@ import { Role } from 'src/common/guard/role/role.enum';
 
 
 @UseGuards(JwtAuthGuard)
+@Roles(Role.WASHER, Role.USER)
 @Controller('availability')
 export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) { }
 
-  @Roles(Role.WASHER)
   @Post()
   create(@Body() createAvailabilityDto: CreateAvailabilityDto, @Req() req: any) {
     const user_id = req.user?.userId;
