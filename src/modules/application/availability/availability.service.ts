@@ -12,6 +12,7 @@ export class AvailabilityService {
 
   async create(createAvailabilityDto: CreateAvailabilityDto, user_id: string) {
     try {
+
       // Ensure date is properly formatted for Prisma
       if (createAvailabilityDto.date) {
         try {
@@ -225,6 +226,7 @@ export class AvailabilityService {
 
   async availableToday(user_id?: string) {
     try {
+
       // Get today's date in ISO format, ensuring the time portion is set to midnight (UTC)
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);  // Set time to 00:00:00.000 UTC
@@ -257,6 +259,7 @@ export class AvailabilityService {
           },
         });
 
+
         // Auto-create availability for stations that don't have it for today
         for (const station of allStations) {
           const existingAvailability = await this.prisma.availability.findFirst({
@@ -285,7 +288,7 @@ export class AvailabilityService {
                 continue;
               }
 
-              // Validate today's day against rule
+              // // Validate today's day against rule
               const dayEnum = AvailabilityHelper.convertDayNameToEnum(todayDayName);
               if (!defaultRule.days_open.includes(dayEnum)) {
                 // Today is closed according to rule; skip auto-creation
@@ -858,6 +861,17 @@ export class AvailabilityService {
 
   async createAvailabilityRule(createAvailabilityRuleDto: CreateAvailabilityRuleDto, user_id: string) {
     try {
+
+      if (!createAvailabilityRuleDto.car_wash_station_id) {
+        const carWashStation = await this.prisma.carWashStation.findFirst({
+          where: {
+            user_id: user_id,
+          },
+        });
+
+        createAvailabilityRuleDto.car_wash_station_id = carWashStation.id;
+      }
+
 
       // check availability rule if already exists
       const availabilityRule = await this.prisma.availabilityRule.findFirst({

@@ -85,7 +85,7 @@ model User {
   availabilities       Availability[]
   review               Review[]
   booking              Booking[]
-  car_wash_station     CarWashStation[]
+  car_wash_station     CarWashStation?
   availability_rules   AvailabilityRule[]
 
   @@map("users")
@@ -454,7 +454,7 @@ model CarWashStation {
   location     String // e.g., 'Tampan, Pekanbaru'
   latitude     Float // Latitude of the car wash station
   longitude    Float // Longitude of the car wash station
-  user_id      String?
+  user_id      String? @unique
   user         User?   @relation(fields: [user_id], references: [id])
 
   services           Service[] // List of services offered at this station

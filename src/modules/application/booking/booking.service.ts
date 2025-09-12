@@ -235,9 +235,8 @@ export class BookingService {
                     switch (userDetails.type) {
                         case 'washer':
                             // Washers can see all bookings for their car wash stations
-                            if (userDetails.car_wash_station && Array.isArray(userDetails.car_wash_station) && userDetails.car_wash_station.length > 0) {
-                                const carWashStationIds = userDetails.car_wash_station.map((station: { id: string }) => station.id);
-                                whereClause.car_wash_station_id = { in: carWashStationIds };
+                            if (userDetails.car_wash_station) {
+                                whereClause.car_wash_station_id = userDetails.car_wash_station.id;
                             } else {
                                 whereClause.user_id = userId;
                             }
@@ -302,7 +301,14 @@ export class BookingService {
                         select: {
                             name: true,
                             image: true,
-                            location: true
+                            location: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                },
+                            },
                         },
                     },
                     service: {
