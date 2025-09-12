@@ -21,5 +21,6 @@ export class CreateServiceDto {
     status: string;
 
     @IsString()
+    @IsOptional()
     car_wash_station_id: string;  // Add this field to link to CarWashStation
 }
