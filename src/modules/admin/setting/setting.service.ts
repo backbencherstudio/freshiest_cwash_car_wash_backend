@@ -149,4 +149,154 @@ export class SettingService {
       };
     }
   }
+
+  async getTermsAndConditions() {
+    const setting = await this.prisma.setting.findFirst({
+      where: { key: 'terms_and_conditions' },
+    });
+    return {
+      success: true,
+      data: setting,
+    };
+  }
+
+  async getPrivacyPolicy() {
+    const setting = await this.prisma.setting.findFirst({
+      where: { key: 'privacy_policy' },
+    });
+    return {
+      success: true,
+      data: setting,
+    };
+  }
+
+  async getFaqSection() {
+    const setting = await this.prisma.setting.findFirst({
+      where: { key: 'faq_section' },
+    });
+    return {
+      success: true,
+      data: setting,
+    };
+  }
+
+  async editTermsAndConditions(body: any) {
+    try {
+      // Validate required fields
+      if (!body.id && !body.key) {
+        return {
+          success: false,
+          message: 'Either id or key is required',
+        };
+      }
+
+      if (!body.termsAndConditions) {
+        return {
+          success: false,
+          message: 'termsAndConditions field is required',
+        };
+      }
+
+      // Use id if provided, otherwise use key
+      const whereClause = body.id ? { id: body.id } : { key: body.key || 'terms_and_conditions' };
+
+      const setting = await this.prisma.setting.update({
+        where: whereClause,
+        data: {
+          termsAndConditions: body.termsAndConditions,
+          updated_at: new Date(),
+        },
+      });
+      return {
+        success: true,
+        message: 'Terms and conditions updated successfully',
+        data: setting,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  async editPrivacyPolicy(body: any) {
+    try {
+      // Validate required fields
+      if (!body.id && !body.key) {
+        return {
+          success: false,
+          message: 'Either id or key is required',
+        };
+      }
+
+      if (!body.privacyPolicy) {
+        return {
+          success: false,
+          message: 'privacyPolicy field is required',
+        };
+      }
+
+      // Use id if provided, otherwise use key
+      const whereClause = body.id ? { id: body.id } : { key: body.key || 'privacy_policy' };
+
+      const setting = await this.prisma.setting.update({
+        where: whereClause,
+        data: {
+          privacyPolicy: body.privacyPolicy,
+          updated_at: new Date(),
+        },
+      });
+      return {
+        success: true,
+        message: 'Privacy policy updated successfully',
+        data: setting,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  async editFaqSection(body: any) {
+    try {
+      // Validate required fields
+      if (!body.id && !body.key) {
+        return {
+          success: false,
+          message: 'Either id or key is required',
+        };
+      }
+
+      if (!body.faqSection) {
+        return {
+          success: false,
+          message: 'faqSection field is required',
+        };
+      }
+
+      // Use id if provided, otherwise use key
+      const whereClause = body.id ? { id: body.id } : { key: body.key || 'faq_section' };
+
+      const setting = await this.prisma.setting.update({
+        where: whereClause,
+        data: {
+          faqSection: body.faqSection,
+          updated_at: new Date(),
+        },
+      });
+      return {
+        success: true,
+        message: 'FAQ section updated successfully',
+        data: setting,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
 }
