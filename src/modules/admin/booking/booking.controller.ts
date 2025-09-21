@@ -10,22 +10,26 @@ import { Roles } from 'src/common/guard/role/roles.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
-@Controller('admin/booking')
+@Controller('dashboard/booking-management')
 export class BookingController {
   constructor(
-    private readonly bookingService: BookingService,
-    private readonly voucherService: VoucherService,
+    private readonly bookingService: BookingService
   ) { }
 
   @Get()
   findAll(
-    @Query('search') searchQuery: string | null,
-    @Query('status') status: string | null,
-    @Query('startDate') startDate: string | null,
-    @Query('endDate') endDate: string | null,
     @Req() req: any,
+    @Query('search') searchQuery?: string,
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.bookingService.findAll(searchQuery);
+    return this.bookingService.findAll({
+      search: searchQuery,
+      status,
+      page: page || 1,
+      limit: limit || 20,
+    });
   }
 
   @Get(':id')

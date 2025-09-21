@@ -16,8 +16,8 @@ export class DashboardController {
    * Returns both car wash stats and income analytics
    */
   @Get()
-  async getDashboardData() {
-    return this.dashboardService.getDashboardData();
+  async getDashboardData(@Query('period') period?: string) {
+    return this.dashboardService.getDashboardData(period || 'monthly');
   }
 
   /**
@@ -46,4 +46,5 @@ export class DashboardController {
   async getRealTimeStats() {
     return this.dashboardService.getRealTimeStats();
   }
+
 }
