@@ -58,6 +58,7 @@ export class CreateBulkAvailabilityDto {
 // New DTO for creating availability rules
 export class CreateAvailabilityRuleDto {
   @IsString()
+  @IsOptional()
   car_wash_station_id: string;
 
   @IsString()

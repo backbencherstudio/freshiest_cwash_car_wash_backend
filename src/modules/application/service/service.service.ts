@@ -11,8 +11,18 @@ export class ServiceService {
   constructor(private prisma: PrismaService) { }
 
   // Create a new service with optional image file
-  async create(createServiceDto: CreateServiceDto, file?: Express.Multer.File) {
+  async create(createServiceDto: CreateServiceDto, file?: Express.Multer.File, userId?: string) {
     try {
+
+      if(!createServiceDto.car_wash_station_id) {
+        const carWashStation = await this.prisma.carWashStation.findFirst({
+          where: {
+            user_id: userId,
+          },
+        });
+        createServiceDto.car_wash_station_id = carWashStation.id;
+      }
+      
       if (file) {
         const fileName = StringHelper.generateRandomFileName(file.originalname);
         await SojebStorage.put(appConfig().storageUrl.service + fileName, file.buffer);

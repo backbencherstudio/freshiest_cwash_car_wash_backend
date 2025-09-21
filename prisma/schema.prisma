@@ -63,18 +63,20 @@ model User {
   car_wash_station          CarWashStation[]
   review                    Review[]
   accounts                  Account[]
-  creator_conversations     Conversation[]       @relation("creator")
-  participant_conversations Conversation[]       @relation("participant")
-  receiver_messages         Message[]            @relation("receiver")
-  sender_messages           Message[]            @relation("sender")
-  receiver_notifications    Notification[]       @relation("receiver")
-  sender_notifications      Notification[]       @relation("sender")
-  payment_transactions      PaymentTransaction[]
-  role_users                RoleUser[]
-  roles                     Role[]
-  ucodes                    Ucode[]
-  user_payment_methods      UserPaymentMethod[]
-  user_settings             UserSetting[]
+  creator_conversations     Conversation[] @relation("creator")
+  participant_conversations Conversation[] @relation("participant")
+  receiver_messages         Message[]      @relation("receiver")
+  sender_messages           Message[]      @relation("sender")
+  receiver_notifications    Notification[] @relation("receiver")
+  sender_notifications      Notification[] @relation("sender")
+
+  user_payment_methods UserPaymentMethod[]
+  user_settings        UserSetting[]
+  ucodes               Ucode[]
+  roles                Role[]
+  role_users           RoleUser[]
+  payment_transactions PaymentTransaction[]
+  availability_rules   AvailabilityRule[]
 
   @@map("users")
 }
@@ -359,25 +361,27 @@ model UserSetting {
 }
 
 model CarWashStation {
-  id             String         @id @default(cuid())
-  name           String
-  description    String
-  status         String         @default("active")
-  image          String?
-  rating         Float          @default(0)
-  reviewCount    Int            @default(0)
-  pricePerWash   Float          @default(0)
-  location       String
-  latitude       Float
-  longitude      Float
-  user_id        String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime
-  availabilities Availability[]
-  bookings       Booking[]
-  user           User?          @relation(fields: [user_id], references: [id])
-  reviews        Review[]
-  services       Service[]
+  id           String  @id @default(cuid())
+  name         String
+  description  String
+  status       String  @default("active")
+  image        String? // URL for the image of the station
+  rating       Float   @default(0) // Average rating
+  reviewCount  Int     @default(0) // Total reviews
+  pricePerWash Float   @default(0)
+  location     String // e.g., 'Tampan, Pekanbaru'
+  latitude     Float // Latitude of the car wash station
+  longitude    Float // Longitude of the car wash station
+  user_id      String? @unique
+  user         User?   @relation(fields: [user_id], references: [id])
+
+  services           Service[] // List of services offered at this station
+  availabilities     Availability[] // List of availability for the station
+  reviews            Review[] // List of reviews for the station
+  bookings           Booking[]
+  availability_rules AvailabilityRule[]
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
 }
 
 model Service {
@@ -416,6 +420,22 @@ model TimeSlot {
   updatedAt       DateTime
   bookings        Booking[]
   availability    Availability @relation(fields: [availability_id], references: [id])
+}
+
+model AvailabilityRule {
+  id                  String         @id @default(cuid())
+  day_of_week         String
+  start_time          String
+  end_time            String
+  is_available        Boolean        @default(true)
+  user_id             String
+  car_wash_station_id String
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @default(now())
+  user                User           @relation(fields: [user_id], references: [id])
+  car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
+
+  @@map("availability_rules")
 }
 
 model Booking {
