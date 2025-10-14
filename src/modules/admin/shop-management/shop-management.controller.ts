@@ -100,7 +100,6 @@ export class ShopManagementController {
     },
   }))
   async createProvider(@Body() createProviderDto: CreateProviderDto) {
-    console.log('Received provider data:', JSON.stringify(createProviderDto, null, 2));
     return this.shopManagementService.createProvider(createProviderDto);
   }
 }
