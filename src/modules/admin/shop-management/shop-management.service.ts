@@ -269,8 +269,8 @@ export class ShopManagementService {
       const promotion = {
         id: `promo_${Date.now()}`,
         ...createPromotionDto,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        created_at: new Date(),
+        updated_at: new Date()
       };
 
       return {
