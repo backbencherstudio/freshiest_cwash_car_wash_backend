@@ -40,7 +40,7 @@ export class BookingService {
                     status: true,
                     payment_status: true,
                     paid_amount: true,
-                    createdAt: true,
+                    created_at: true,
                     user: {
                         select: {
                             name: true,
@@ -62,7 +62,7 @@ export class BookingService {
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { created_at: 'desc' },
             });
 
             return {
@@ -101,8 +101,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,
@@ -227,8 +227,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    createdAt: true,
-                    updatedAt: true,
+                    created_at: true,
+                    updated_at: true,
                     user: {
                         select: {
                             id: true,

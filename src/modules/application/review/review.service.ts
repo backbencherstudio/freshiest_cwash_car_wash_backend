@@ -16,8 +16,8 @@ export class ReviewService {
           id: true,
           rating: true,
           comment: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           user: {
             select: {
               id: true,
@@ -82,8 +82,8 @@ export class ReviewService {
           id: true,
           rating: true,
           comment: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           user: {
             select: {
               name: true,
@@ -97,7 +97,7 @@ export class ReviewService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
       });
 
       return {
@@ -119,8 +119,8 @@ export class ReviewService {
           id: true,
           rating: true,
           comment: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           user: {
             select: {
               name: true,
@@ -156,8 +156,8 @@ export class ReviewService {
           id: true,
           rating: true,
           comment: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
           user: {
             select: {
               name: true,
