@@ -113,7 +113,9 @@ export class ReportsExportService {
   async getBookingManagement(queryDto: BookingQueryDto) {
     try {
       const { tab = 'all', page = 1, limit = 10 } = queryDto;
-      const skip = (page - 1) * limit;
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      const skip = (pageNum - 1) * limitNum;
 
       let whereCondition: any = {};
 
@@ -134,7 +136,7 @@ export class ReportsExportService {
         this.prisma.booking.findMany({
           where: whereCondition,
           skip,
-          take: limit,
+          take: limitNum,
           include: {
             user: {
               select: {
@@ -201,10 +203,10 @@ export class ReportsExportService {
         data: {
           bookings: transformedBookings,
           pagination: {
-            page,
-            limit,
+            page: pageNum,
+            limit: limitNum,
             total,
-            totalPages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / limitNum)
           }
         }
       };

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { BookingStatus } from './filter-reports.dto';
 
 export class BookingQueryDto {
@@ -19,6 +20,8 @@ export class BookingQueryDto {
     example: 1
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
   page?: number = 1;
 
   @ApiProperty({ 
@@ -27,5 +30,7 @@ export class BookingQueryDto {
     example: 10
   })
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
   limit?: number = 10;
 }
