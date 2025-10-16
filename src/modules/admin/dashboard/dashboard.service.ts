@@ -58,13 +58,13 @@ export class DashboardService {
                 where: {
                     status: 'accept',
                     payment_status: 'succeeded',
-                    created_at: {
+                    createdAt: {
                         gte: new Date(new Date().setMonth(new Date().getMonth() - 7)),
                     },
                 },
                 select: {
                     total_amount: true,
-                    created_at: true,
+                    createdAt: true,
                 },
             });
 
@@ -114,9 +114,9 @@ export class DashboardService {
                         bookings: service._count.id,
                     })),
                     monthlyRevenue: monthlyRevenue.reduce((acc, booking) => {
-                        const monthKey = booking.created_at.toISOString().substring(0, 7); // YYYY-MM
+                        const monthKey = booking.createdAt.toISOString().substring(0, 7); // YYYY-MM
                         if (!acc[monthKey]) {
-                            acc[monthKey] = { month: booking.created_at, revenue: 0 };
+                            acc[monthKey] = { month: booking.createdAt, revenue: 0 };
                         }
                         acc[monthKey].revenue += Number(booking.total_amount || 0);
                         return acc;
@@ -150,7 +150,7 @@ export class DashboardService {
                 where: {
                     status: 'accept',
                     payment_status: 'succeeded',
-                    created_at: {
+                    createdAt: {
                         gte: startOfMonth, // Only get bookings in the current month
                         lte: endOfMonth,
                     },
@@ -298,14 +298,14 @@ export class DashboardService {
                 where: {
                     status: 'accept',
                     payment_status: 'succeeded',
-                    created_at: {
+                    createdAt: {
                         gte: twelveMonthsAgo,
                         lte: now,
                     },
                 },
                 select: {
                     total_amount: true,
-                    created_at: true,
+                    createdAt: true,
                 },
             });
 
@@ -316,7 +316,7 @@ export class DashboardService {
 
             // Group data by month
             const groupedData = monthlyData.reduce((acc, booking) => {
-                const monthKey = booking.created_at.toISOString().substring(0, 7); // YYYY-MM
+                const monthKey = booking.createdAt.toISOString().substring(0, 7); // YYYY-MM
                 if (!acc[monthKey]) {
                     acc[monthKey] = { revenue: 0, bookings: 0 };
                 }
@@ -424,14 +424,14 @@ export class DashboardService {
                                 where: {
                                     status: 'accept',
                                     payment_status: 'succeeded',
-                                    created_at: {
+                                    createdAt: {
                                         gte: startDate,
                                     },
                                 },
                             },
                             reviews: {
                                 where: {
-                                    created_at: {
+                                    createdAt: {
                                         gte: startDate,
                                     },
                                 },
@@ -543,7 +543,7 @@ export class DashboardService {
                         where: {
                             status: 'accept',
                             payment_status: 'succeeded',
-                            created_at: {
+                            createdAt: {
                                 gte: startDate,
                             },
                         },
@@ -685,7 +685,7 @@ export class DashboardService {
             // Today's bookings
             const todayBookings = await this.prisma.booking.count({
                 where: {
-                    created_at: {
+                    createdAt: {
                         gte: startOfDay,
                         lte: endOfDay,
                     },
@@ -697,7 +697,7 @@ export class DashboardService {
                 where: {
                     status: 'completed',
                     payment_status: 'completed',
-                    created_at: {
+                    createdAt: {
                         gte: startOfDay,
                         lte: endOfDay,
                     },

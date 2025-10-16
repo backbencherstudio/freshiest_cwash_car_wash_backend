@@ -83,6 +83,7 @@ export class BookingService {
                     payment_reference_number: createBookingDto.payment_reference_number,
                     payment_provider_charge_type: createBookingDto.payment_provider_charge_type,
                     payment_provider_charge: createBookingDto.payment_provider_charge,
+                    updatedAt: new Date()
                 },
                 select: {
                     id: true,
@@ -102,8 +103,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    created_at: true,
-                    updated_at: true,
+                    createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
                             id: true,
@@ -235,8 +236,8 @@ export class BookingService {
                     switch (userDetails.type) {
                         case 'washer':
                             // Washers can see all bookings for their car wash stations
-                            if (userDetails.car_wash_station) {
-                                whereClause.car_wash_station_id = userDetails.car_wash_station.id;
+                            if (userDetails.car_wash_station && userDetails.car_wash_station.length > 0) {
+                                whereClause.car_wash_station_id = userDetails.car_wash_station[0].id;
                             } else {
                                 whereClause.user_id = userId;
                             }
@@ -284,7 +285,7 @@ export class BookingService {
                     status: true,
                     payment_status: true,
                     paid_amount: true,
-                    created_at: true,
+                    createdAt: true,
                     time_slot: {
                         select: {
                             start_time: true,
@@ -327,7 +328,7 @@ export class BookingService {
                         },
                     },
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy: { createdAt: 'desc' },
             });
 
             if (bookings.length > 0) {
@@ -423,8 +424,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    created_at: true,
-                    updated_at: true,
+                    createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
                             id: true,
@@ -633,8 +634,8 @@ export class BookingService {
                     payment_reference_number: true,
                     payment_provider_charge_type: true,
                     payment_provider_charge: true,
-                    created_at: true,
-                    updated_at: true,
+                    createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
                             id: true,
@@ -807,8 +808,8 @@ export class BookingService {
                     total_amount: true,
                     status: true,
                     payment_status: true,
-                    created_at: true,
-                    updated_at: true,
+                    createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
                             id: true,
@@ -837,7 +838,7 @@ export class BookingService {
                         },
                     },
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy: { createdAt: 'desc' },
             });
 
             return {
@@ -911,8 +912,8 @@ export class BookingService {
                     total_amount: true,
                     status: true,
                     payment_status: true,
-                    created_at: true,
-                    updated_at: true,
+                    createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
                             id: true,

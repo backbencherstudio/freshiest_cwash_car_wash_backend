@@ -11,7 +11,11 @@ export class ReviewService {
   async create(createReviewDto: CreateReviewDto, userId: string) {
     try {
       const review = await this.prisma.review.create({
-        data: { ...createReviewDto, user_id: userId },
+        data: { 
+          ...createReviewDto, 
+          user_id: userId,
+          updatedAt: new Date()
+        },
         select: {
           id: true,
           rating: true,
@@ -38,17 +42,17 @@ export class ReviewService {
       // Update the car wash station rating and review count
       const [avgRating, reviewCount] = await Promise.all([
         this.prisma.review.aggregate({
-          where: { car_wash_station_id: review.car_wash_station.id },
+          where: { car_wash_station_id: createReviewDto.car_wash_station_id },
           _avg: { rating: true },
         }),
         this.prisma.review.count({
-          where: { car_wash_station_id: review.car_wash_station.id },
+          where: { car_wash_station_id: createReviewDto.car_wash_station_id },
         }),
       ]);
 
       // Update the car wash station with the new rating and review count
       await this.prisma.carWashStation.update({
-        where: { id: review.car_wash_station.id },
+        where: { id: createReviewDto.car_wash_station_id },
         data: {
           rating: avgRating._avg.rating || 0,  // Default to 0 if no reviews yet
           reviewCount: reviewCount,

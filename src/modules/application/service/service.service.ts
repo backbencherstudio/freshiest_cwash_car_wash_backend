@@ -32,6 +32,7 @@ export class ServiceService {
       const service = await this.prisma.service.create({
         data: {
           ...createServiceDto,
+          updatedAt: new Date()
         },
         select: {
           id: true,
@@ -40,8 +41,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          created_at: true,
-          updated_at: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
 
@@ -82,8 +83,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          created_at: true,
-          updated_at: true,
+          createdAt: true,
+          updatedAt: true,
           car_wash_station: {
             select: {
               id: true,
@@ -129,8 +130,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          created_at: true,
-          updated_at: true,
+          createdAt: true,
+          updatedAt: true,
           car_wash_station: {
             select: {
               id: true,
@@ -190,8 +191,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          created_at: true,
-          updated_at: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
 

@@ -35,7 +35,10 @@ export class VoucherService {
 
       // Create voucher
       const voucher = await this.prisma.voucher.create({
-        data: createVoucherDto,
+        data: {
+          ...createVoucherDto,
+          updatedAt: new Date()
+        },
         select: {
           id: true,
           code: true,
@@ -228,7 +231,10 @@ export class VoucherService {
       // Update voucher
       const voucher = await this.prisma.voucher.update({
         where: { id },
-        data: updateVoucherDto,
+        data: {
+          ...updateVoucherDto,
+          updatedAt: new Date()
+        },
         select: {
           id: true,
           code: true,
@@ -301,7 +307,10 @@ export class VoucherService {
       // Toggle active status
       const voucher = await this.prisma.voucher.update({
         where: { id },
-        data: { is_active: !existingVoucher.is_active },
+        data: { 
+          is_active: !existingVoucher.is_active,
+          updatedAt: new Date()
+        },
         select: {
           id: true,
           code: true,

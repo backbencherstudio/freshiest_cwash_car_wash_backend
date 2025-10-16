@@ -51,6 +51,7 @@ export class CarWashStationService {
         data: {
           ...createCarWashStationDto,
           user_id: userId,
+          updatedAt: new Date()
         },
         select: {
           id: true,
@@ -61,7 +62,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          created_at: true,
+          createdAt: true,
         },
       });
 
@@ -114,7 +115,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          created_at: true,
+          createdAt: true,
         },
         skip: skip,
         take: limit,
@@ -193,7 +194,7 @@ export class CarWashStationService {
           longitude: true,
           rating: true,
           reviewCount: true,
-          created_at: true,
+          createdAt: true,
           user: {
             select: {
               id: true,
@@ -206,8 +207,10 @@ export class CarWashStationService {
             select: {
               id: true,
               name: true,
+              description: true,
               price: true,
               image: true,
+              status: true,
             }
           },
           availabilities: {
@@ -303,7 +306,7 @@ export class CarWashStationService {
           location: true,
           latitude: true,
           longitude: true,
-          created_at: true,
+          createdAt: true,
         },
       });
 

@@ -64,7 +64,11 @@ export class AvailabilityService {
       const availabilityResult = await this.prisma.$transaction(async (prisma) => {
         // Create availability first
         const availability = await prisma.availability.create({
-          data: { ...createAvailabilityDto, user_id },
+          data: { 
+            ...createAvailabilityDto, 
+            user_id,
+            updatedAt: new Date()
+          },
           select: {
             id: true,
             user_id: true,
@@ -75,8 +79,8 @@ export class AvailabilityService {
             closing_time: true,
             slot_duration_minutes: true,
             is_closed: true,
-            created_at: true,
-            updated_at: true,
+            createdAt: true,
+            updatedAt: true,
           },
         });
 
@@ -103,9 +107,8 @@ export class AvailabilityService {
               availability_id: true,
               capacity: true,
               is_blocked: true,
-              block_reason: true,
-              created_at: true,
-              updated_at: true,
+              createdAt: true,
+              updatedAt: true,
             },
           });
 
@@ -333,7 +336,7 @@ export class AvailabilityService {
           location: true,
           latitude: true,
           longitude: true,
-          created_at: true,
+          createdAt: true,
           availabilities: {
             where: {
               date: todayISOString,
@@ -356,7 +359,6 @@ export class AvailabilityService {
                   end_time: true,
                   capacity: true,
                   is_blocked: true,
-                  block_reason: true,
                 },
               },
             },
@@ -406,7 +408,7 @@ export class AvailabilityService {
           // Get recent booking history (last 5 bookings)
           recentBookings = await this.prisma.booking.findMany({
             where: { user_id: user_id },
-            orderBy: { created_at: 'desc' },
+            orderBy: { createdAt: 'desc' },
             take: 5,
             select: {
               id: true,
@@ -415,7 +417,7 @@ export class AvailabilityService {
               status: true,
               payment_status: true,
               total_amount: true,
-              created_at: true,
+              createdAt: true,
               service: {
                 select: {
                   id: true,
@@ -497,8 +499,8 @@ export class AvailabilityService {
           closing_time: true,
           slot_duration_minutes: true,
           is_closed: true,
-          created_at: true,
-          updated_at: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -520,9 +522,8 @@ export class AvailabilityService {
               end_time: true,
               capacity: true,
               is_blocked: true,
-              block_reason: true,
-              created_at: true,
-              updated_at: true,
+              createdAt: true,
+              updatedAt: true,
             },
           },
         },
@@ -755,8 +756,8 @@ export class AvailabilityService {
             closing_time: true,
             slot_duration_minutes: true,
             is_closed: true,
-            created_at: true,
-            updated_at: true,
+            createdAt: true,
+            updatedAt: true,
             user: true,
             time_slots: {
               select: {
@@ -766,9 +767,8 @@ export class AvailabilityService {
                 availability_id: true,
                 capacity: true,
                 is_blocked: true,
-                block_reason: true,
-                created_at: true,
-                updated_at: true,
+                createdAt: true,
+                updatedAt: true,
               },
             },
           },
@@ -804,9 +804,8 @@ export class AvailabilityService {
                 availability_id: true,
                 capacity: true,
                 is_blocked: true,
-                block_reason: true,
-                created_at: true,
-                updated_at: true,
+                createdAt: true,
+                updatedAt: true,
               },
             });
 
@@ -895,6 +894,10 @@ export class AvailabilityService {
           slot_duration_minutes: createAvailabilityRuleDto.slot_duration_minutes,
           days_open: createAvailabilityRuleDto.days_open,
           user_id: user_id,
+          day_of_week: 'MONDAY', // Default value
+          start_time: createAvailabilityRuleDto.opening_time || '09:00',
+          end_time: createAvailabilityRuleDto.closing_time || '17:00',
+          updated_at: new Date()
         },
         select: {
           id: true,
@@ -1024,6 +1027,7 @@ export class AvailabilityService {
                 closing_time: rule.closing_time,
                 slot_duration_minutes: rule.slot_duration_minutes,
                 is_closed: false,
+                updatedAt: new Date()
               },
               select: {
                 id: true,

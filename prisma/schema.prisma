@@ -404,6 +404,10 @@ model Availability {
   date                DateTime
   user_id             String
   car_wash_station_id String
+  opening_time        String?
+  closing_time        String?
+  slot_duration_minutes Int?
+  is_closed           Boolean        @default(false)
   createdAt           DateTime       @default(now())
   updatedAt           DateTime
   car_wash_station    CarWashStation @relation(fields: [car_wash_station_id], references: [id])
@@ -416,6 +420,8 @@ model TimeSlot {
   availability_id String
   start_time      String
   end_time        String
+  capacity        Int?         @default(1)
+  is_blocked      Boolean      @default(false)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime
   bookings        Booking[]
@@ -430,6 +436,10 @@ model AvailabilityRule {
   is_available        Boolean        @default(true)
   user_id             String
   car_wash_station_id String
+  days_open           String[]       @default([])
+  opening_time        String?
+  closing_time        String?
+  slot_duration_minutes Int?
   created_at          DateTime       @default(now())
   updated_at          DateTime       @default(now())
   user                User           @relation(fields: [user_id], references: [id])

@@ -1,9 +1,8 @@
 import { IsString, IsDateString, IsOptional, IsArray, ValidateNested, IsISO8601, IsInt, IsBoolean, Min, Max, IsEnum } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { DayOfWeek } from '@prisma/client';
 
-// Define the enum values for validation - handle case where DayOfWeek might be undefined
-const DayOfWeekValues = DayOfWeek ? Object.values(DayOfWeek) : ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+// Define the enum values for validation
+const DayOfWeekValues = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
 export class CreateAvailabilityDto {
   @IsString()
@@ -74,7 +73,7 @@ export class CreateAvailabilityRuleDto {
 
   @IsArray()
   @IsEnum(DayOfWeekValues, { each: true })
-  days_open: DayOfWeek[]; // e.g., [DayOfWeek.MON, DayOfWeek.TUE, DayOfWeek.WED]
+  days_open: string[]; // e.g., ['MONDAY', 'TUESDAY', 'WEDNESDAY']
 }
 
 // DTO for generating availabilities from rules
