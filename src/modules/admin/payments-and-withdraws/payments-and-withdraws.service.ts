@@ -5,19 +5,19 @@ import { UpdatePaymentsAndWithdrawDto } from './dto/update-payments-and-withdraw
 
 @Injectable()
 export class PaymentsAndWithdrawsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findAll() {
     try {
       // Get summary cards data
       const summaryCards = await this.getSummaryCards();
-      
+
       // Get service provider earnings (4 providers)
       const serviceProviderEarnings = await this.getServiceProviderEarnings();
-      
+
       // Get recent withdrawal requests (4 requests)
       const recentWithdrawalRequests = await this.getRecentWithdrawalRequests();
-      
+
       // Get payment history (4 transactions)
       const paymentHistory = await this.getPaymentHistory();
 
@@ -61,7 +61,7 @@ export class PaymentsAndWithdrawsService {
           {
             OR: [
               { roles: { some: { name: 'washer' } } },
-              { car_wash_station: { some: {} } },
+              { car_wash_station: { isNot: null } },
             ],
           },
         ],
@@ -103,7 +103,7 @@ export class PaymentsAndWithdrawsService {
           {
             OR: [
               { roles: { some: { name: 'washer' } } },
-              { car_wash_station: { some: {} } },
+              { car_wash_station: { isNot: null } },
             ],
           },
         ],
@@ -132,20 +132,21 @@ export class PaymentsAndWithdrawsService {
       let ratingCount = 0;
 
       // Calculate earnings and jobs from all stations
-      provider.car_wash_station.forEach(station => {
+      if (provider.car_wash_station) {
+        const station = provider.car_wash_station;
         totalJobs += station.bookings.length;
-        totalEarnings += station.bookings.reduce((sum, booking) => 
+        totalEarnings += station.bookings.reduce((sum, booking) =>
           sum + Number(booking.total_amount || 0), 0
         );
-        
+
         // Calculate monthly earnings (last 30 days)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        const monthlyBookings = station.bookings.filter(booking => 
-          booking.createdAt >= thirtyDaysAgo
+
+        const monthlyBookings = station.bookings.filter(booking =>
+          booking.created_at >= thirtyDaysAgo
         );
-        monthlyEarnings += monthlyBookings.reduce((sum, booking) => 
+        monthlyEarnings += monthlyBookings.reduce((sum, booking) =>
           sum + Number(booking.total_amount || 0), 0
         );
 
@@ -154,7 +155,7 @@ export class PaymentsAndWithdrawsService {
           totalRating += review.rating;
           ratingCount++;
         });
-      });
+      }
 
       const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 

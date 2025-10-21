@@ -42,8 +42,8 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -77,10 +77,10 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
       });
 
       return {
@@ -106,8 +106,8 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -141,8 +141,8 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -235,8 +235,8 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -308,8 +308,8 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
@@ -339,10 +339,10 @@ export class VoucherService {
           discount_percentage: true,
           is_active: true,
           expiryDate: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
       });
 
       return {

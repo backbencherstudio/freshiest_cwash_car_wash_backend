@@ -8,7 +8,7 @@ import { CreatePromotionDto } from './dto/promotion.dto';
 
 @Injectable()
 export class ShopManagementService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: ShopQueryDto) {
     try {
@@ -17,7 +17,7 @@ export class ShopManagementService {
 
       // Build where clause
       const where: any = {};
-      
+
       if (search) {
         where.OR = [
           { name: { contains: search, mode: 'insensitive' } },
@@ -51,8 +51,8 @@ export class ShopManagementService {
                 id: true,
                 total_amount: true,
                 status: true,
-                createdAt: true
-              } 
+                created_at: true
+              }
             },
             reviews: {
               select: {
@@ -68,7 +68,7 @@ export class ShopManagementService {
               }
             }
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { created_at: 'desc' }
         }),
         this.prisma.carWashStation.count({ where })
       ]);
@@ -79,8 +79,8 @@ export class ShopManagementService {
         const totalEarnings = shop.bookings
           .filter(booking => booking.status === 'completed')
           .reduce((sum, booking) => sum + Number(booking.total_amount || 0), 0);
-        
-        const averageRating = shop.reviews.length > 0 
+
+        const averageRating = shop.reviews.length > 0
           ? shop.reviews.reduce((sum, review) => sum + review.rating, 0) / shop.reviews.length
           : 0;
 
@@ -103,8 +103,8 @@ export class ShopManagementService {
           status: shop.status,
           user: shop.user,
           services: shop.services,
-          createdAt: shop.createdAt,
-          updatedAt: shop.updatedAt
+          created_at: shop.created_at,
+          updated_at: shop.updated_at
         };
       });
 
@@ -172,7 +172,7 @@ export class ShopManagementService {
           image: createShopDto.image,
           status: createShopDto.status || 'active',
           user_id: createShopDto.userId,
-          updatedAt: new Date()
+          updated_at: new Date()
         },
         include: {
           user: true
@@ -197,7 +197,7 @@ export class ShopManagementService {
         where: { id },
         data: {
           ...updateShopDto,
-          updatedAt: new Date()
+          updated_at: new Date()
         },
         include: {
           user: true
@@ -242,7 +242,7 @@ export class ShopManagementService {
         where: { id: priceCapsDto.shopId },
         data: {
           pricePerWash: priceCapsDto.basicWashCap,
-          updatedAt: new Date()
+          updated_at: new Date()
         }
       });
 
@@ -308,7 +308,7 @@ export class ShopManagementService {
       const stats = {
         totalJobs: shop.bookings.length,
         totalEarnings: shop.bookings.reduce((sum, booking) => sum + Number(booking.total_amount || 0), 0),
-        averageRating: shop.reviews.length > 0 
+        averageRating: shop.reviews.length > 0
           ? shop.reviews.reduce((sum, review) => sum + review.rating, 0) / shop.reviews.length
           : 0,
         totalReviews: shop.reviews.length
