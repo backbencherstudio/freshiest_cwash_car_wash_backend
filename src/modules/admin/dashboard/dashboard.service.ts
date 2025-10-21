@@ -292,7 +292,7 @@ export class DashboardService {
         try {
             const now = new Date();
             const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-            
+
             // Get monthly revenue data for the last 12 months
             const monthlyData = await this.prisma.booking.findMany({
                 where: {
@@ -328,7 +328,7 @@ export class DashboardService {
             for (let i = 0; i < 12; i++) {
                 const monthDate = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
                 const monthKey = monthDate.getFullYear() + '-' + String(monthDate.getMonth() + 1).padStart(2, '0');
-                
+
                 const monthData = groupedData[monthKey] || { revenue: 0, bookings: 0 };
                 totalRevenue += monthData.revenue;
 
@@ -344,7 +344,7 @@ export class DashboardService {
             // Calculate percentage change (current month vs previous month)
             const currentMonthRevenue = chartData[chartData.length - 1]?.revenue || 0;
             const previousMonthRevenue = chartData[chartData.length - 2]?.revenue || 0;
-            
+
             let percentageChange = 0;
             if (previousMonthRevenue > 0) {
                 percentageChange = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
@@ -387,7 +387,7 @@ export class DashboardService {
             // Calculate date range based on period
             const now = new Date();
             let startDate: Date;
-            
+
             switch (period.toLowerCase()) {
                 case 'daily':
                     startDate = new Date(now.setHours(0, 0, 0, 0));
@@ -412,7 +412,7 @@ export class DashboardService {
                         {
                             OR: [
                                 { roles: { some: { name: 'washer' } } },
-                                { car_wash_station: { some: {} } },
+                                { car_wash_station: { id: { not: null } } },
                             ],
                         },
                     ],
@@ -448,14 +448,15 @@ export class DashboardService {
                 let ratingCount = 0;
 
                 // Aggregate data from all stations owned by this washer
-                washer.car_wash_station.forEach(station => {
+                if (washer.car_wash_station) {
+                    const station = washer.car_wash_station;
                     totalJobs += station.bookings.length;
-                    
+
                     station.reviews.forEach(review => {
                         totalRating += review.rating;
                         ratingCount++;
                     });
-                });
+                }
 
                 const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 
@@ -466,7 +467,7 @@ export class DashboardService {
                     totalJobs,
                     averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
                     ratingCount,
-                    stations: washer.car_wash_station.length,
+                    stations: washer.car_wash_station || 0,
                 };
             });
 
@@ -517,7 +518,7 @@ export class DashboardService {
             // Calculate date range based on period
             const now = new Date();
             let startDate: Date;
-            
+
             switch (period.toLowerCase()) {
                 case 'daily':
                     startDate = new Date(now.setHours(0, 0, 0, 0));
@@ -554,7 +555,7 @@ export class DashboardService {
             // Group by location and calculate activity
             const locationActivity = stations.reduce((acc, station) => {
                 const location = station.location;
-                
+
                 if (!acc[location]) {
                     acc[location] = {
                         location,
@@ -563,13 +564,13 @@ export class DashboardService {
                         stationCount: 0,
                     };
                 }
-                
+
                 acc[location].totalBookings += station.bookings.length;
-                acc[location].totalRevenue += station.bookings.reduce((sum, booking) => 
+                acc[location].totalRevenue += station.bookings.reduce((sum, booking) =>
                     sum + Number(booking.total_amount || 0), 0
                 );
                 acc[location].stationCount += 1;
-                
+
                 return acc;
             }, {} as Record<string, { location: string; totalBookings: number; totalRevenue: number; stationCount: number }>);
 
@@ -644,17 +645,17 @@ export class DashboardService {
                 amount: Number(withdrawal.amount || 0),
                 currency: withdrawal.currency || 'USD',
                 requestedAt: withdrawal.created_at,
-                requestedTime: withdrawal.created_at.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
+                requestedTime: withdrawal.created_at.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
                     minute: '2-digit',
-                    hour12: true 
+                    hour12: true
                 }),
                 status: withdrawal.status,
                 referenceNumber: withdrawal.reference_number,
             }));
 
             // Calculate total pending amount
-            const totalPendingAmount = withdrawalData.reduce((sum, withdrawal) => 
+            const totalPendingAmount = withdrawalData.reduce((sum, withdrawal) =>
                 sum + withdrawal.amount, 0
             );
 
