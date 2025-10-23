@@ -8,7 +8,7 @@ import { CreatePromotionDto } from './dto/promotion.dto';
 
 @Injectable()
 export class ShopManagementService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: ShopQueryDto) {
     try {
@@ -17,7 +17,7 @@ export class ShopManagementService {
 
       // Build where clause
       const where: any = {};
-      
+
       if (search) {
         where.OR = [
           { name: { contains: search, mode: 'insensitive' } },
@@ -52,7 +52,7 @@ export class ShopManagementService {
                 total_amount: true,
                 status: true,
                 created_at: true
-              } 
+              }
             },
             reviews: {
               select: {
@@ -79,8 +79,8 @@ export class ShopManagementService {
         const totalEarnings = shop.bookings
           .filter(booking => booking.status === 'completed')
           .reduce((sum, booking) => sum + Number(booking.total_amount || 0), 0);
-        
-        const averageRating = shop.reviews.length > 0 
+
+        const averageRating = shop.reviews.length > 0
           ? shop.reviews.reduce((sum, review) => sum + review.rating, 0) / shop.reviews.length
           : 0;
 
@@ -101,10 +101,10 @@ export class ShopManagementService {
             earnings: totalEarnings
           },
           status: shop.status,
-          user: shop.user_id,
-          services: shop,
-          createdAt: shop.created_at,
-          updatedAt: shop.updated_at
+          user: shop.user,
+          services: shop.services,
+          created_at: shop.created_at,
+          updated_at: shop.updated_at
         };
       });
 
@@ -242,7 +242,7 @@ export class ShopManagementService {
         where: { id: priceCapsDto.shopId },
         data: {
           pricePerWash: priceCapsDto.basicWashCap,
-          created_at: new Date()
+          updated_at: new Date()
         }
       });
 
@@ -308,7 +308,7 @@ export class ShopManagementService {
       const stats = {
         totalJobs: shop.bookings.length,
         totalEarnings: shop.bookings.reduce((sum, booking) => sum + Number(booking.total_amount || 0), 0),
-        averageRating: shop.reviews.length > 0 
+        averageRating: shop.reviews.length > 0
           ? shop.reviews.reduce((sum, review) => sum + review.rating, 0) / shop.reviews.length
           : 0,
         totalReviews: shop.reviews.length

@@ -6,7 +6,7 @@ import { BookingStatus } from './dto/filter-reports.dto';
 
 @Injectable()
 export class ReportsExportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getFilteredReports(filterDto: FilterReportsDto) {
     try {
@@ -76,7 +76,7 @@ export class ReportsExportService {
               }
             }
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { created_at: 'desc' },
           take: 10
         }),
         this.prisma.booking.count({ where: whereCondition }),
@@ -163,7 +163,7 @@ export class ReportsExportService {
               }
             }
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { created_at: 'desc' }
         }),
         this.prisma.booking.count({ where: whereCondition })
       ]);
@@ -227,7 +227,7 @@ export class ReportsExportService {
               OR: [
                 { roles: { some: { name: 'washer' } } },
                 { type: 'vendor' },
-                { car_wash_station: { some: {} } },
+                { car_wash_station: { isNot: null } },
               ],
             },
           ],
@@ -250,12 +250,13 @@ export class ReportsExportService {
         let totalEarnings = 0;
         let totalBookings = 0;
 
-        provider.car_wash_station.forEach(station => {
+        if (provider.car_wash_station) {
+          const station = provider.car_wash_station;
           totalBookings += station.bookings.length;
-          totalEarnings += station.bookings.reduce((sum, booking) => 
+          totalEarnings += station.bookings.reduce((sum, booking) =>
             sum + Number(booking.total_amount || 0), 0
           );
-        });
+        }
 
         const platformFee = totalEarnings * 0.2; // 20% platform fee
         const netEarning = totalEarnings - platformFee;
@@ -296,7 +297,7 @@ export class ReportsExportService {
               OR: [
                 { roles: { some: { name: 'washer' } } },
                 { type: 'vendor' },
-                { car_wash_station: { some: {} } },
+                { car_wash_station: { isNot: null } },
               ],
             },
           ],
@@ -323,10 +324,11 @@ export class ReportsExportService {
         let totalRating = 0;
         let ratingCount = 0;
 
-        provider.car_wash_station.forEach(station => {
+        if (provider.car_wash_station) {
+          const station = provider.car_wash_station;
           totalBookings += station.bookings.length;
           completedBookings += station.bookings.filter(b => b.status === 'completed').length;
-          totalEarnings += station.bookings.reduce((sum, booking) => 
+          totalEarnings += station.bookings.reduce((sum, booking) =>
             sum + Number(booking.total_amount || 0), 0
           );
 
@@ -334,7 +336,7 @@ export class ReportsExportService {
             totalRating += review.rating;
             ratingCount++;
           });
-        });
+        }
 
         const avgRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 
