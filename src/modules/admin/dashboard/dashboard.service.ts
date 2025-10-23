@@ -96,39 +96,39 @@ export class DashboardService {
         };
       });
 
-      return {
-        success: true,
-        message: 'Car wash statistics retrieved successfully',
-        data: {
-          totalRevenue: Number(totalRevenue._sum.total_amount || 0),
-          totalBookings: await this.prisma.booking.count({
-            where: { status: 'accept' },
-          }),
-          chartData,
-          revenueByStation: revenueByStation.map((station) => ({
-            stationId: station.car_wash_station_id,
-            revenue: Number(station._sum.total_amount || 0),
-            bookings: station._count.id,
-          })),
-          revenueByService: revenueByService.map((service) => ({
-            serviceId: service.service_id,
-            revenue: Number(service._sum.total_amount || 0),
-            bookings: service._count.id,
-          })),
-          monthlyRevenue: monthlyRevenue.map((month) => ({
-            month: month.created_at,
-            revenue: Number(month._sum.total_amount || 0),
-          })),
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: `Error retrieving car wash statistics: ${error.message}`,
-        data: null,
-      };
+            return {
+                success: true,
+                message: 'Car wash statistics retrieved successfully',
+                data: {
+                    totalRevenue: Number(totalRevenue._sum.total_amount || 0),
+                    totalBookings: await this.prisma.booking.count({
+                        where: { status: 'accept' },
+                    }),
+                    chartData,
+                    revenueByStation: revenueByStation.map(station => ({
+                        stationId: station.car_wash_station_id,
+                        revenue: Number(station._sum.total_amount || 0),
+                        bookings: station._count.id,
+                    })),
+                    revenueByService: revenueByService.map(service => ({
+                        serviceId: service.service_id,
+                        revenue: Number(service._sum.total_amount || 0),
+                        bookings: service._count.id,
+                    })),
+                    monthlyRevenue: monthlyRevenue.map(month => ({
+                        month: month.created_at,
+                        revenue: Number(month._sum.total_amount || 0),
+                    })),
+                },
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Error retrieving car wash statistics: ${error.message}`,
+                data: null,
+            };
+        }
     }
-  }
 
   /**
    * Get income analytics for the donut chart
@@ -144,24 +144,24 @@ export class DashboardService {
         currentMonth.setMonth(currentMonth.getMonth() + 1),
       ); // End of current month
 
-      // Get income by source
-      const incomeBySource = await this.prisma.booking.groupBy({
-        by: ['service_id'],
-        where: {
-          status: 'accept',
-          payment_status: 'succeeded',
-          created_at: {
-            gte: startOfMonth, // Only get bookings in the current month
-            lte: endOfMonth,
-          },
-        },
-        _sum: {
-          total_amount: true,
-        },
-        _count: {
-          id: true,
-        },
-      });
+            // Get income by source
+            const incomeBySource = await this.prisma.booking.groupBy({
+                by: ['service_id'],
+                where: {
+                    status: 'accept',
+                    payment_status: 'succeeded',
+                    created_at: {
+                        gte: startOfMonth, // Only get bookings in the current month
+                        lte: endOfMonth,
+                    },
+                },
+                _sum: {
+                    total_amount: true,
+                },
+                _count: {
+                    id: true,
+                },
+            });
 
       // Calculate the total income for the current month
       const currentTotalIncome = incomeBySource.reduce(
@@ -215,39 +215,39 @@ export class DashboardService {
     }
   }
 
-  /**
-   * Get comprehensive dashboard data
-   * Combines car wash stats and income analytics
-   */
-  async getDashboardData() {
-    try {
-      const [carWashStats, incomeAnalytics] = await Promise.all([
-        this.getCarWashStats(),
-        this.getIncomeAnalytics(),
-      ]);
+    /**
+     * Get comprehensive dashboard data
+     * Combines car wash stats and income analytics
+     */
+    async getDashboardData() {
+        try {
+            const [carWashStats, incomeAnalytics] = await Promise.all([
+                this.getCarWashStats(),
+                this.getIncomeAnalytics(),
+            ]);
 
-      return {
-        success: true,
-        message: 'Dashboard data retrieved successfully',
-        data: {
-          carWash: carWashStats.data,
-          income: incomeAnalytics.data,
-          summary: {
-            totalRevenue: carWashStats.data?.totalRevenue || 0,
-            totalBookings: carWashStats.data?.totalBookings || 0,
-            totalIncome: incomeAnalytics.data?.totalIncome || 0,
-            //  percentageIncrease: incomeAnalytics.data?.totalIncome || 0,
-          },
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: `Error retrieving dashboard data: ${error.message}`,
-        data: null,
-      };
+            return {
+                success: true,
+                message: 'Dashboard data retrieved successfully',
+                data: {
+                    carWash: carWashStats.data,
+                    income: incomeAnalytics.data,
+                    summary: {
+                        totalRevenue: carWashStats.data?.totalRevenue || 0,
+                        totalBookings: carWashStats.data?.totalBookings || 0,
+                        totalIncome: incomeAnalytics.data?.totalIncome || 0,
+                        //  percentageIncrease: incomeAnalytics.data?.totalIncome || 0,
+                    },
+                },
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Error retrieving dashboard data: ${error.message}`,
+                data: null,
+            };
+        }
     }
-  }
 
   /**
    * Get real-time dashboard updates
@@ -259,30 +259,30 @@ export class DashboardService {
       const startOfDay = new Date(today.setHours(0, 0, 0, 0));
       const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-      // Today's bookings
-      const todayBookings = await this.prisma.booking.count({
-        where: {
-          created_at: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
+            // Today's bookings
+            const todayBookings = await this.prisma.booking.count({
+                where: {
+                    created_at: {
+                        gte: startOfDay,
+                        lte: endOfDay,
+                    },
+                },
+            });
 
-      // Today's revenue
-      const todayRevenue = await this.prisma.booking.aggregate({
-        where: {
-          status: 'completed',
-          payment_status: 'completed',
-          created_at: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-        _sum: {
-          total_amount: true,
-        },
-      });
+            // Today's revenue
+            const todayRevenue = await this.prisma.booking.aggregate({
+                where: {
+                    status: 'completed',
+                    payment_status: 'completed',
+                    created_at: {
+                        gte: startOfDay,
+                        lte: endOfDay,
+                    },
+                },
+                _sum: {
+                    total_amount: true,
+                },
+            });
 
       // Pending payments
       const pendingPayments = await this.prisma.booking.count({

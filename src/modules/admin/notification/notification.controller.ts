@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, UseGuards, Req, Body, ValidationPipe, UsePipes } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SendNotificationDto } from './dto/send-notification.dto';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Role } from '../../../common/guard/role/role.enum';
 import { Roles } from '../../../common/guard/role/roles.decorator';
 import { RolesGuard } from '../../../common/guard/role/roles.guard';
@@ -15,52 +16,29 @@ import { Request } from 'express';
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @ApiOperation({ summary: 'Get all notifications' })
-  @Get()
-  async findAll(@Req() req: Request) {
-    try {
-      const user_id = req.user.userId;
+  @ApiOperation({ summary: 'Get today\'s notifications' })
+  @ApiResponse({ status: 200, description: 'Today\'s notifications retrieved successfully' })
+  @Get('today')
+  async getTodaysNotifications() {
+    return this.notificationService.getTodaysNotifications();
+  }
 
-      const notification = await this.notificationService.findAll(user_id);
-
-      return notification;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+  @ApiOperation({ summary: 'Send notification to users' })
+  @ApiResponse({ status: 201, description: 'Notification sent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @Post('send')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async sendNotification(@Body() sendNotificationDto: SendNotificationDto, @Req() req: Request) {
+    // console.log(sendNotificationDto);
+    const senderId = req.user.userId;
+    return this.notificationService.sendNotification(sendNotificationDto, senderId);
   }
 
   @ApiOperation({ summary: 'Delete notification' })
+  @ApiResponse({ status: 200, description: 'Notification deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Notification not found' })
   @Delete(':id')
-  async remove(@Req() req: Request, @Param('id') id: string) {
-    try {
-      const user_id = req.user.userId;
-      const notification = await this.notificationService.remove(id, user_id);
-
-      return notification;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  @ApiOperation({ summary: 'Delete all notifications' })
-  @Delete()
-  async removeAll(@Req() req: Request) {
-    try {
-      const user_id = req.user.userId;
-      const notification = await this.notificationService.removeAll(user_id);
-
-      return notification;
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
+  async deleteNotification(@Param('id') id: string) {
+    return this.notificationService.deleteNotification(id);
   }
 }

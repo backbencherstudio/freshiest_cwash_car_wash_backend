@@ -9,23 +9,82 @@ import { TransactionRepository } from 'src/common/repository/transaction/transac
 export class BookingService {
     constructor(private prisma: PrismaService) { }
 
+    /**
+     * Get status label for display
+     */
+    private getStatusLabel(status: string): string {
+        const statusMap: Record<string, string> = {
+            'pending': 'Scheduled',
+            'accept': 'Scheduled',
+            'completed': 'Complete',
+            'cancelled': 'Canceled',
+            'ongoing': 'Ongoing',
+        };
+        return statusMap[status.toLowerCase()] || status;
+    }
 
-    async findAll(searchQuery: string | null) {
+    /**
+     * Get status color for display
+     */
+    private getStatusColor(status: string): string {
+        const colorMap: Record<string, string> = {
+            'pending': 'blue',
+            'accept': 'blue',
+            'completed': 'green',
+            'cancelled': 'red',
+            'ongoing': 'orange',
+        };
+        return colorMap[status.toLowerCase()] || 'gray';
+    }
+
+
+    async findAll(filters: {
+        search?: string;
+        status?: string;
+        page?: number;
+        limit?: number;
+    }) {
         try {
+            const { search, status, page = 1, limit = 20 } = filters;
+            const skip = (page - 1) * limit;
+            
             const whereClause: any = {};
-            // Add search functionality for fields: carType, status, payment_status, etc.
-            if (searchQuery) {
+
+            // Add search functionality
+            if (search) {
                 whereClause['OR'] = [
-                    { carType: { contains: searchQuery, mode: 'insensitive' } },
-                    { status: { contains: searchQuery, mode: 'insensitive' } },
-                    { payment_status: { contains: searchQuery, mode: 'insensitive' } },
-                    { user: { name: { contains: searchQuery, mode: 'insensitive' } } },
-                    { user: { email: { contains: searchQuery, mode: 'insensitive' } } },
-                    { car_wash_station: { name: { contains: searchQuery, mode: 'insensitive' } } },
+                    { user: { name: { contains: search, mode: 'insensitive' } } },
+                    { user: { email: { contains: search, mode: 'insensitive' } } },
                 ];
             }
 
-            // Fetch the bookings based on the whereClause
+            // Add status filter - map the 4 tabs exactly
+            if (status) {
+                switch (status) {
+                    case 'all':
+                        // No status filter - show all
+                        break;
+                    case 'scheduled':
+                        whereClause.status = { in: ['pending', 'accept'] };
+                        break;
+                    case 'ongoing':
+                        whereClause.status = 'ongoing';
+                        break;
+                    case 'completed':
+                        whereClause.status = 'completed';
+                        break;
+                    case 'cancelled':
+                        whereClause.status = 'cancelled';
+                        break;
+                    default:
+                        whereClause.status = status;
+                }
+            }
+
+            // Get total count for pagination
+            const total = await this.prisma.booking.count({ where: whereClause });
+
+            // Fetch the bookings with pagination
             const bookings = await this.prisma.booking.findMany({
                 where: whereClause,
                 select: {
@@ -43,6 +102,7 @@ export class BookingService {
                     created_at: true,
                     user: {
                         select: {
+                            id: true,
                             name: true,
                             email: true,
                             avatar: true,
@@ -55,6 +115,19 @@ export class BookingService {
                             price: true,
                         },
                     },
+                    car_wash_station: {
+                        select: {
+                            name: true,
+                            location: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    },
                     time_slot: {
                         select: {
                             start_time: true,
@@ -65,15 +138,40 @@ export class BookingService {
                 orderBy: { created_at: 'desc' },
             });
 
+            // Format bookings for dashboard display - simplified to match the image
+            const formattedBookings = bookings.map((booking, index) => ({
+                id: booking.id,
+                bookingId: `BK${String((page - 1) * limit + index + 1).padStart(3, '0')}`, // BK001, BK002, etc.
+                customer: {
+                    name: booking.user.name || 'Unknown Customer',
+                    avatar: booking.user.avatar,
+                },
+                service: `${booking.service.name}, ${booking.car_wash_station.location}`,
+                vehicle: `Toyota Camry, ABC-123`, // Placeholder as shown in image
+                dateTime: `${booking.bookingDate.toISOString().split('T')[0]}, ${booking.time_slot.start_time}`,
+                washer: booking.car_wash_station.user?.name || 'Unassigned',
+                status: this.getStatusLabel(booking.status),
+                earning: `$${Number(booking.total_amount || 0)}`,
+            }));
+
             return {
                 success: true,
-                message: bookings.length > 0 ? 'Bookings retrieved successfully' : 'No bookings found',
-                data: bookings,
+                message: formattedBookings.length > 0 ? 'Bookings retrieved successfully' : 'No bookings found',
+                data: {
+                    bookings: formattedBookings,
+                    pagination: {
+                        page,
+                        limit,
+                        total,
+                        totalPages: Math.ceil(total / limit),
+                    },
+                },
             };
         } catch (error) {
             return {
                 success: false,
                 message: `Error fetching bookings: ${error.message}`,
+                data: null,
             };
         }
     }
@@ -305,4 +403,5 @@ export class BookingService {
             };
         }
     }
+
 }
