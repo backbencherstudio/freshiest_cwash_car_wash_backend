@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateCarWashStationDto } from './dto/create-car-wash-station.dto';
 import { UpdateCarWashStationDto } from './dto/update-car-wash-station.dto';
@@ -19,17 +19,24 @@ interface FindAllParams {
 
 @Injectable()
 export class CarWashStationService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Helper function to calculate distance between two coordinates using Haversine formula
-  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
     const R = 6371; // Radius of the Earth in km
     const dLat = this.deg2rad(lat2 - lat1);
     const dLng = this.deg2rad(lng2 - lng1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in km
     return Math.round(distance * 100) / 100; // Round to 2 decimal places
@@ -39,12 +46,30 @@ export class CarWashStationService {
     return deg * (Math.PI / 180);
   }
 
-  async create(createCarWashStationDto: CreateCarWashStationDto, file: Express.Multer.File, userId: string) {
+  async create(
+    createCarWashStationDto: CreateCarWashStationDto,
+    file: Express.Multer.File,
+    userId: string,
+  ) {
     try {
       if (file) {
         const fileName = StringHelper.generateRandomFileName(file.originalname);
-        await SojebStorage.put(appConfig().storageUrl.carWashStation + fileName, file.buffer);
+        await SojebStorage.put(
+          appConfig().storageUrl.carWashStation + fileName,
+          file.buffer,
+        );
         createCarWashStationDto.image = fileName; // Add image to DTO if not present
+      }
+
+      const existing = await this.prisma.carWashStation.findUnique({
+        where: { user_id: userId },
+      });
+
+      if (existing) {
+        return {
+          message: 'You already created a car wash station.',
+          stationId: existing.id,
+        };
       }
 
       const carWashStation = await this.prisma.carWashStation.create({
@@ -60,6 +85,7 @@ export class CarWashStationService {
           pricePerWash: true,
           location: true,
           latitude: true,
+          phone_number: true,
           longitude: true,
           created_at: true,
         },
@@ -130,8 +156,18 @@ export class CarWashStationService {
           }
 
           // Calculate distance if user coordinates are provided
-          if (lat !== null && lng !== null && record.latitude && record.longitude) {
-            const distance = this.calculateDistance(lat, lng, record.latitude, record.longitude);
+          if (
+            lat !== null &&
+            lng !== null &&
+            record.latitude &&
+            record.longitude
+          ) {
+            const distance = this.calculateDistance(
+              lat,
+              lng,
+              record.latitude,
+              record.longitude,
+            );
             record['distance'] = distance;
             record['distanceUnit'] = 'km';
           }
@@ -139,12 +175,14 @@ export class CarWashStationService {
 
         // Sort by distance if coordinates provided and order is 'distance'
         if (lat !== null && lng !== null && order === 'distance') {
-          carWashStations = carWashStations.sort((a, b) => (a['distance'] || 0) - (b['distance'] || 0));
+          carWashStations = carWashStations.sort(
+            (a, b) => (a['distance'] || 0) - (b['distance'] || 0),
+          );
         }
 
         // Filter by radius if coordinates and radius provided
         if (lat !== null && lng !== null && radius) {
-          carWashStations = carWashStations.filter(station => {
+          carWashStations = carWashStations.filter((station) => {
             return !station['distance'] || station['distance'] <= radius;
           });
         }
@@ -177,8 +215,8 @@ export class CarWashStationService {
     try {
       // Get today's date in ISO format, ensuring the time portion is set to midnight (UTC)
       const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);  // Set time to 00:00:00.000 UTC
-      const todayISOString = today.toISOString();  // This will return the full ISO string (with time)
+      today.setUTCHours(0, 0, 0, 0); // Set time to 00:00:00.000 UTC
+      const todayISOString = today.toISOString(); // This will return the full ISO string (with time)
 
       const carWashStation = await this.prisma.carWashStation.findUnique({
         where: { id },
@@ -200,7 +238,7 @@ export class CarWashStationService {
               name: true,
               email: true,
               avatar: true,
-            }
+            },
           },
           services: {
             select: {
@@ -208,11 +246,11 @@ export class CarWashStationService {
               name: true,
               price: true,
               image: true,
-            }
+            },
           },
           availabilities: {
             where: {
-              date: todayISOString,  // Use the full ISO DateTime format for today
+              date: todayISOString, // Use the full ISO DateTime format for today
             },
             select: {
               id: true,
@@ -223,17 +261,17 @@ export class CarWashStationService {
                   id: true,
                   start_time: true,
                   end_time: true,
-                }
-              }
-            }
+                },
+              },
+            },
           },
           reviews: {
             select: {
               id: true,
               rating: true,
               comment: true,
-            }
-          }
+            },
+          },
         },
       });
 
@@ -272,7 +310,11 @@ export class CarWashStationService {
     }
   }
 
-  async update(id: string, updateCarWashStationDto: UpdateCarWashStationDto, file: Express.Multer.File) {
+  async update(
+    id: string,
+    updateCarWashStationDto: UpdateCarWashStationDto,
+    file: Express.Multer.File,
+  ) {
     try {
       let image = updateCarWashStationDto.image;
 
@@ -280,11 +322,16 @@ export class CarWashStationService {
       if (file) {
         // Check if there's an old image to delete
         if (image) {
-          await SojebStorage.delete(appConfig().storageUrl.carWashStation + image); // Delete the old file
+          await SojebStorage.delete(
+            appConfig().storageUrl.carWashStation + image,
+          ); // Delete the old file
         }
 
         const fileName = StringHelper.generateRandomFileName(file.originalname);
-        await SojebStorage.put(appConfig().storageUrl.carWashStation + fileName, file.buffer);
+        await SojebStorage.put(
+          appConfig().storageUrl.carWashStation + fileName,
+          file.buffer,
+        );
         image = fileName; // Set the uploaded image file
       }
 
@@ -331,7 +378,9 @@ export class CarWashStationService {
       });
 
       if (carWashStation && carWashStation.image) {
-        await SojebStorage.delete(appConfig().storageUrl.carWashStation + carWashStation.image);
+        await SojebStorage.delete(
+          appConfig().storageUrl.carWashStation + carWashStation.image,
+        );
       }
 
       // Now, delete the car wash station record

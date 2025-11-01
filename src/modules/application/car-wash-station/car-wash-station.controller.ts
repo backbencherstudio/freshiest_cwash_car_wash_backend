@@ -72,7 +72,7 @@ export class CarWashStationController {
     });
     return carWashStations;
   }
-  
+
   @ApiOperation({ summary: 'Read one car wash station' })
   @Get(':id')
   async findOne(@Param('id') id: string) {

@@ -129,7 +129,7 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
+          created_at: true,
           updated_at: true,
           car_wash_station: {
             select: {
@@ -144,7 +144,7 @@ export class ServiceService {
       if (service && service.image) {
         service['image_url'] = SojebStorage.url(appConfig().storageUrl.service + service.image);
       }
-      if (service && service.car_wash_station_id && service.car_wash_station.image) {
+      if (service && service.car_wash_station.image) {
         service.car_wash_station['station_image_url'] = SojebStorage.url(appConfig().storageUrl.carWashStation + service.car_wash_station.image);
       }
 
@@ -190,8 +190,8 @@ export class ServiceService {
           price: true,
           status: true,
           image: true,
-          createdAt: true,
-          updatedAt: true,
+          created_at: true,
+          updated_at: true,
         },
       });
 
