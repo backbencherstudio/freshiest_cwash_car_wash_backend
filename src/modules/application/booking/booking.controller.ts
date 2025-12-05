@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -15,7 +26,13 @@ export class BookingController {
   constructor(
     private readonly bookingService: BookingService,
     private readonly voucherService: VoucherService,
-  ) { }
+  ) {}
+
+  @Post('preview')
+  preview(@Body() dto: CreateBookingDto, @Req() req: any) {
+    const user_id = req.user?.userId;
+    return this.bookingService.previewBooking(user_id, dto);
+  }
 
   @Post()
   create(@Body() createBookingDto: CreateBookingDto, @Req() req: any) {
@@ -40,7 +57,11 @@ export class BookingController {
 
     // If date range is provided, get bookings by date range
     if (startDate && endDate) {
-      return this.bookingService.getBookingsByDateRange(startDate, endDate, userId);
+      return this.bookingService.getBookingsByDateRange(
+        startDate,
+        endDate,
+        userId,
+      );
     }
 
     // Default: get all bookings

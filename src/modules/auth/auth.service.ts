@@ -83,12 +83,12 @@ export class AuthService {
       if (updateUserDto.name) {
         data.name = updateUserDto.name;
       }
-      if (updateUserDto.first_name) {
-        data.first_name = updateUserDto.first_name;
-      }
-      if (updateUserDto.last_name) {
-        data.last_name = updateUserDto.last_name;
-      }
+      // if (updateUserDto.first_name) {
+      //   data.first_name = updateUserDto.first_name;
+      // }
+      // if (updateUserDto.last_name) {
+      //   data.last_name = updateUserDto.last_name;
+      // }
       if (updateUserDto.phone_number) {
         data.phone_number = updateUserDto.phone_number;
       }
@@ -243,15 +243,11 @@ export class AuthService {
 
   async register({
     name,
-    first_name,
-    last_name,
     email,
     password,
     type,
   }: {
     name: string;
-    first_name: string;
-    last_name: string;
     email: string;
     password: string;
     type?: string;
@@ -272,8 +268,6 @@ export class AuthService {
 
       const user = await UserRepository.createUser({
         name: name,
-        first_name: first_name,
-        last_name: last_name,
         email: email,
         password: password,
         type: type,
@@ -326,22 +320,22 @@ export class AuthService {
       // ----------------------------------------------------
 
       // Generate verification token
-      const token = await UcodeRepository.createVerificationToken({
-        userId: user.data.id,
-        email: email,
-      });
+      // const token = await UcodeRepository.createVerificationToken({
+      //   userId: user.data.id,
+      //   email: email,
+      // });
 
       // Send verification email with token
-      await this.mailService.sendVerificationLink({
-        email,
-        name: email,
-        token: token.token,
-        type: type,
-      });
+      // await this.mailService.sendVerificationLink({
+      //   email,
+      //   name: email,
+      //   token: token.token,
+      //   type: type,
+      // });
 
       return {
         success: true,
-        message: 'We have sent a verification link to your email',
+        message: 'Email registered successfully!',
       };
     } catch (error) {
       return {

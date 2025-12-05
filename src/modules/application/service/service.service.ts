@@ -144,7 +144,7 @@ export class ServiceService {
       if (service && service.image) {
         service['image_url'] = SojebStorage.url(appConfig().storageUrl.service + service.image);
       }
-      if (service && service.car_wash_station && service.car_wash_station.image) {
+      if (service && service.car_wash_station.image) {
         service.car_wash_station['station_image_url'] = SojebStorage.url(appConfig().storageUrl.carWashStation + service.car_wash_station.image);
       }
 

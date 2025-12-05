@@ -17,7 +17,7 @@ export class DashboardController {
    */
   @Get()
   async getDashboardData(@Query('period') period?: string) {
-    return this.dashboardService.getDashboardData(period || 'monthly');
+    return this.dashboardService.getDashboardData();
   }
 
   /**
