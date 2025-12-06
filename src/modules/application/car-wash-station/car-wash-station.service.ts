@@ -211,6 +211,96 @@ export class CarWashStationService {
     }
   }
 
+  async findByUserId(userId: string) {
+    try {
+      const carWashStation = await this.prisma.carWashStation.findUnique({
+        where: { user_id: userId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          image: true,
+          pricePerWash: true,
+          location: true,
+          latitude: true,
+          longitude: true,
+          phone_number: true,
+          rating: true,
+          reviewCount: true,
+          status: true,
+          created_at: true,
+          updated_at: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+              phone_number: true,
+            },
+          },
+          services: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              price: true,
+              image: true,
+              status: true,
+              created_at: true,
+            },
+          },
+          availability_rules: {
+            select: {
+              id: true,
+              opening_time: true,
+              closing_time: true,
+              slot_duration_minutes: true,
+              days_open: true,
+              created_at: true,
+              updated_at: true,
+            },
+          },
+        },
+      });
+
+      if (carWashStation && carWashStation.image) {
+        carWashStation['image_url'] = SojebStorage.url(
+          appConfig().storageUrl.carWashStation + carWashStation.image,
+        );
+      }
+
+      if (carWashStation && carWashStation.user && carWashStation.user.avatar) {
+        carWashStation.user['avatar_url'] = SojebStorage.url(
+          appConfig().storageUrl.avatar + carWashStation.user.avatar,
+        );
+      }
+
+      if (carWashStation && carWashStation.services && carWashStation.services.length > 0) {
+        for (const service of carWashStation.services) {
+          if (service.image) {
+            service['image_url'] = SojebStorage.url(
+              appConfig().storageUrl.service + service.image,
+            );
+          }
+        }
+      }
+
+      return {
+        success: true,
+        message: carWashStation
+          ? 'Car wash station retrieved successfully'
+          : 'No car wash station found for this user',
+        data: carWashStation,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Error fetching car wash station: ${error.message}`,
+      };
+    }
+  }
+
   async findOne(id: string) {
     try {
       // Get today's date in ISO format, ensuring the time portion is set to midnight (UTC)

@@ -637,6 +637,15 @@ export class BookingService {
       // Check if booking exists and user has access
       const existingBooking = await this.prisma.booking.findUnique({
         where: { id },
+        include: {
+          car_wash_station: {
+            select: {
+              user: {
+                select: { id: true },
+              },
+            },
+          },
+        },
       });
 
       if (!existingBooking) {
@@ -647,7 +656,7 @@ export class BookingService {
       }
 
       // Check access control based on user type
-      if (userId && existingBooking.user_id !== userId) {
+      if (userId && existingBooking.car_wash_station.user.id !== userId) {
         const userDetails = await this.prisma.user.findUnique({
           where: { id: userId },
           select: { type: true },
