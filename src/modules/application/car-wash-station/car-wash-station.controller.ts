@@ -73,6 +73,16 @@ export class CarWashStationController {
     return carWashStations;
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.WASHER)
+  @ApiOperation({ summary: 'Get washer own car wash station' })
+  @Get('my-station')
+  async getMyStation(@Req() req: any) {
+    const userId = req.user?.userId;
+    const carWashStation = await this.carWashStationService.findByUserId(userId);
+    return carWashStation;
+  }
+
   @ApiOperation({ summary: 'Read one car wash station' })
   @Get(':id')
   async findOne(@Param('id') id: string) {
