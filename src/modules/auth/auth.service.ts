@@ -333,9 +333,19 @@ export class AuthService {
       //   type: type,
       // });
 
+      // Auto-login on successful registration (same shape as login response)
+      const payload = { email: email, sub: user.data.id };
+      const token = this.jwtService.sign(payload);
+      const userDetails = await UserRepository.getUserDetails(user.data.id);
+
       return {
         success: true,
         message: 'Email registered successfully!',
+        authorization: {
+          token: token,
+          type: 'bearer',
+        },
+        type: userDetails?.type,
       };
     } catch (error) {
       return {
