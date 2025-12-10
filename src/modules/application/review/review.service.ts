@@ -110,6 +110,62 @@ export class ReviewService {
     }
   }
 
+  // Get all reviews for a specific car wash station
+  async findByCarWashStation(carWashStationId: string) {
+    try {
+      const reviews = await this.prisma.review.findMany({
+        where: { car_wash_station_id: carWashStationId },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          created_at: true,
+          updated_at: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+      });
+
+      // Get station info with average rating
+      const station = await this.prisma.carWashStation.findUnique({
+        where: { id: carWashStationId },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          rating: true,
+          reviewCount: true,
+        },
+      });
+
+      if (!station) {
+        return {
+          success: false,
+          message: 'Car wash station not found',
+          data: null,
+        };
+      }
+
+      return {
+        success: true,
+        message: reviews.length > 0 ? 'Reviews retrieved successfully' : 'No reviews found for this station',
+        data: {
+          station,
+          reviews,
+          total: reviews.length,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Error fetching reviews: ${error.message}`);
+    }
+  }
+
   // Find a single review by ID
   async findOne(id: string) {
     try {

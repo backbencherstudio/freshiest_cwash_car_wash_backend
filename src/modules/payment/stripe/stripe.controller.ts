@@ -13,6 +13,7 @@ export class StripeController {
     @Req() req: Request,
   ) {
     try {
+      // NestJS rawBody: true puts the raw body in req.rawBody
       const payload = req.rawBody.toString();
       const event = await this.stripeService.handleWebhook(payload, signature);
 
@@ -46,6 +47,7 @@ export class StripeController {
             status: 'failed',
             raw_status: failedPaymentIntent.status,
           });
+          break;
         case 'payment_intent.canceled':
           const canceledPaymentIntent = event.data.object;
           // Update transaction status in database

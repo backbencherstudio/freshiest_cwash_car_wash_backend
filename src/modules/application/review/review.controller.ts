@@ -40,6 +40,20 @@ export class ReviewController {
     }
   }
 
+  @ApiOperation({ summary: 'Get all reviews for a car wash station' })
+  @Get('station/:carWashStationId')
+  async findByStation(@Param('carWashStationId') carWashStationId: string) {
+    try {
+      const reviews = await this.reviewService.findByCarWashStation(carWashStationId);
+      return reviews;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
   @ApiOperation({ summary: 'Get a single review by ID' })
   @Get(':id')
   async findOne(@Param('id') id: string) {
