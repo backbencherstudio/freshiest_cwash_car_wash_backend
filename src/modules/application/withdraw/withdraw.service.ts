@@ -95,4 +95,56 @@ export class WithdrawService {
 
         return { success: true, message: 'Withdraw request submitted', data: tx };
     }
+
+    async getWithdrawHistory(user_id: string, status?: string) {
+       
+        const whereClause: any = {
+            user_id,
+            type: 'withdraw',
+        };
+
+        // Filter by status if provided
+        if (status) {
+            whereClause.status = status;
+        }
+
+        const withdrawals = await this.prisma.paymentTransaction.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                amount: true,
+                currency: true,
+                status: true,
+                withdraw_via: true,
+                reference_number: true,
+                created_at: true,
+                updated_at: true,
+            },
+            orderBy: { created_at: 'desc' },
+        });
+
+        // Calculate totals by status
+        const totals = {
+            pending: 0,
+            processing: 0,
+            completed: 0,
+            failed: 0,
+        };
+
+        for (const w of withdrawals) {
+            if (totals[w.status] !== undefined) {
+                totals[w.status] += Number(w.amount || 0);
+            }
+        }
+
+        return {
+            success: true,
+            message: withdrawals.length > 0 ? 'Withdraw history retrieved' : 'No withdrawals found',
+            data: {
+                withdrawals,
+                totals,
+                count: withdrawals.length,
+            },
+        };
+    }
 }
