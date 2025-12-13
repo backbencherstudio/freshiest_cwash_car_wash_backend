@@ -1,6 +1,6 @@
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -31,4 +31,12 @@ export class CreateUserDto {
     example: 'user',
   })
   type?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description: 'Firebase Cloud Messaging token for push notifications',
+  })
+  @IsOptional()
+  fcm_token?: string;
 }

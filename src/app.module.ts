@@ -19,6 +19,7 @@ import { ApplicationModule } from './modules/application/application.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { FirebaseModule } from './common/lib/Firebase';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { PaymentModule } from './modules/payment/payment.module';
     // ]),
     // General modules
     PrismaModule,
+    FirebaseModule,
     AuthModule,
     AbilityModule,
     MailModule,
