@@ -56,6 +56,7 @@ export class AuthController {
       const email = data.email;
       const password = data.password;
       const type = data.type;
+      const fcm_token = data.fcm_token;
 
       if (!name) {
         throw new HttpException('Name not provided', HttpStatus.UNAUTHORIZED);
@@ -75,6 +76,7 @@ export class AuthController {
         email: email,
         password: password,
         type: type,
+        fcm_token: fcm_token,
       });
 
       return response;
@@ -90,15 +92,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Login user' })
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: Request) {
+  async login(@Req() req: Request, @Body() body: { fcm_token?: string }) {
     try {
       const user_id = req.user.id;
-
       const user_email = req.user.email;
+      const fcm_token = body?.fcm_token;
 
       const response = await this.authService.login({
         userId: user_id,
         email: user_email,
+        fcm_token: fcm_token,
       });
 
       return response;
@@ -429,4 +432,45 @@ export class AuthController {
     }
   }
   // --------- end 2FA ---------
+
+  // --------- FCM Token ---------
+  @ApiOperation({ summary: 'Update FCM token for push notifications' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Patch('fcm-token')
+  async updateFcmToken(@Req() req: Request, @Body() data: { fcm_token: string }) {
+    try {
+      const user_id = req.user.userId;
+      const fcm_token = data.fcm_token;
+      if (!fcm_token) {
+        return {
+          success: false,
+          message: 'FCM token not provided',
+        };
+      }
+      return await this.authService.updateFcmToken(user_id, fcm_token);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  @ApiOperation({ summary: 'Remove FCM token (logout/disable notifications)' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Patch('fcm-token/remove')
+  async removeFcmToken(@Req() req: Request) {
+    try {
+      const user_id = req.user.userId;
+      return await this.authService.removeFcmToken(user_id);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+  // --------- end FCM Token ---------
 }

@@ -1,238 +1,805 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Car Wash Booking - Payment Test</title>
+    <title>Car Wash Booking - Payment</title>
     <script src="https://js.stripe.com/v3/"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        --primary: #0066ff;
+        --primary-dark: #0052cc;
+        --success: #00c853;
+        --error: #ff3d57;
+        --warning: #ffab00;
+        --bg-dark: #0a0e17;
+        --bg-card: #141b2d;
+        --bg-input: #1a2338;
+        --text-primary: #ffffff;
+        --text-secondary: #8b95a5;
+        --border: #2a3548;
+        --gradient: linear-gradient(135deg, #0066ff 0%, #00c6ff 100%);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background-color: #f0f4f8;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg-dark);
+        min-height: 100vh;
+        color: var(--text-primary);
+        background-image: 
+          radial-gradient(ellipse at 20% 20%, rgba(0, 102, 255, 0.15) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 80%, rgba(0, 198, 255, 0.1) 0%, transparent 50%);
       }
+
+      .page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
       .container {
-        max-width: 600px;
-        margin: auto;
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 480px;
       }
+
+      .card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 32px;
+        border: 1px solid var(--border);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+
+      .logo-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--gradient);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+
+      .logo-text {
+        font-size: 22px;
+        font-weight: 700;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
       h1 {
-        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
       }
+
+      .subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+        font-size: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
       label {
         display: block;
         margin-bottom: 8px;
-        font-weight: bold;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text-secondary);
       }
+
       input,
-      select,
-      #card-element {
+      select {
         width: 100%;
-        padding: 12px 15px;
-        margin-bottom: 10px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        font-size: 16px;
+        padding: 14px 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 15px;
+        font-family: inherit;
+        transition: all 0.2s ease;
       }
+
+      input::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.6;
+      }
+
       input:focus,
-      select:focus,
-      #card-element:focus {
+      select:focus {
         outline: none;
-        border-color: #4caf50;
-        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
       }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238b95a5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 18px;
+        padding-right: 40px;
+      }
+
+      select option {
+        background: var(--bg-input);
+        color: var(--text-primary);
+      }
+
+      .card-element-wrapper {
+        padding: 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+      }
+
+      .card-element-wrapper.focused {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 24px 0;
+        gap: 16px;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .divider span {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
       button {
         width: 100%;
-        padding: 10px;
-        background-color: #4caf50;
-        color: #fff;
+        padding: 16px 24px;
+        background: var(--gradient);
+        color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: inherit;
         cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
       }
-      button:hover {
-        background-color: #45a049;
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 102, 255, 0.4);
       }
-      .loading {
-        text-align: center;
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .message {
+        padding: 16px;
+        border-radius: 12px;
+        margin-top: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.success {
+        background: rgba(0, 200, 83, 0.1);
+        border: 1px solid rgba(0, 200, 83, 0.3);
+      }
+
+      .message.error {
+        background: rgba(255, 61, 87, 0.1);
+        border: 1px solid rgba(255, 61, 87, 0.3);
+      }
+
+      .message.info {
+        background: rgba(0, 102, 255, 0.1);
+        border: 1px solid rgba(0, 102, 255, 0.3);
+      }
+
+      .message-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+      }
+
+      .message.success .message-icon {
+        background: var(--success);
+      }
+
+      .message.error .message-icon {
+        background: var(--error);
+      }
+
+      .message.info .message-icon {
+        background: var(--primary);
+      }
+
+      .message-content h4 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .message-content p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .steps {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--bg-input);
+        border-radius: 20px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+      }
+
+      .step.active {
+        background: rgba(0, 102, 255, 0.2);
+        color: var(--primary);
+      }
+
+      .step.completed {
+        background: rgba(0, 200, 83, 0.2);
+        color: var(--success);
+      }
+
+      .step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .step.active .step-num {
+        background: var(--primary);
+        color: white;
+      }
+
+      .step.completed .step-num {
+        background: var(--success);
+        color: white;
+      }
+
+      .collapsible {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+
+      .collapsible-header {
+        padding: 14px 16px;
+        background: var(--bg-input);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .collapsible-header:hover {
+        background: rgba(42, 53, 72, 0.8);
+      }
+
+      .collapsible-content {
+        padding: 16px;
         display: none;
-        margin-top: 20px;
       }
-      .error,
-      .success {
+
+      .collapsible.open .collapsible-content {
+        display: block;
+      }
+
+      .collapsible-arrow {
+        transition: transform 0.2s ease;
+      }
+
+      .collapsible.open .collapsible-arrow {
+        transform: rotate(180deg);
+      }
+
+      .test-cards {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .test-cards code {
+        background: var(--bg-dark);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        color: var(--primary);
+      }
+
+      .test-cards ul {
+        margin-top: 8px;
+        padding-left: 20px;
+      }
+
+      .test-cards li {
+        margin-bottom: 6px;
+      }
+
+      .footer {
         text-align: center;
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 8px;
+        margin-top: 24px;
+        color: var(--text-secondary);
+        font-size: 13px;
       }
-      .error {
-        background-color: #f8d7da;
-        color: #721c24;
+
+      .footer a {
+        color: var(--primary);
+        text-decoration: none;
       }
-      .success {
-        background-color: #d4edda;
-        color: #155724;
+
+      /* Receipt styles */
+      .receipt {
+        background: var(--bg-input);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+      }
+
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--border);
+      }
+
+      .receipt-row:last-child {
+        border-bottom: none;
+        font-weight: 600;
+        font-size: 18px;
+        padding-top: 16px;
+      }
+
+      .receipt-label {
+        color: var(--text-secondary);
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Car Wash Booking</h1>
-      <form id="booking-form">
-        <div>
-          <label for="service_id">Service ID</label>
-          <input
-            type="text"
-            id="service_id"
-            name="service_id"
-            required
-            placeholder="e.g., cme427ig10001ws6ce6o16ztx"
-          />
-        </div>
-        <div>
-          <label for="time_slot_id">Time Slot ID</label>
-          <input
-            type="text"
-            id="time_slot_id"
-            name="time_slot_id"
-            required
-            placeholder="e.g., cme7xdpk3000rwsik3ivsrj53"
-          />
-        </div>
-        <div>
-          <label for="carType">Car Type</label>
-          <select id="carType" name="carType" required>
-            <option value="">Select Car Type</option>
-            <option value="Sedan">Sedan</option>
-            <option value="SUV">SUV</option>
-            <option value="Truck">Truck</option>
-            <option value="Van">Van</option>
-            <option value="Hatchback">Hatchback</option>
-          </select>
-        </div>
-        <div>
-          <label for="voucher_code">Voucher Code (Optional)</label>
-          <input
-            type="text"
-            id="voucher_code"
-            name="voucher_code"
-            placeholder="e.g., SAVE20"
-          />
-        </div>
-        <div>
-          <label for="jwt_token">JWT Token</label>
-          <input
-            type="text"
-            id="jwt_token"
-            name="jwt_token"
-            required
-            placeholder="Enter JWT Token here"
-          />
-        </div>
+    <div class="page-wrapper">
+      <div class="container">
+        <div class="card">
+          <div class="logo">
+            <div class="logo-icon">🚗</div>
+            <span class="logo-text">CWash</span>
+          </div>
 
-        <!-- Stripe Elements Card Element -->
-        <div>
-          <label for="card-element">Credit or Debit Card</label>
-          <div id="card-element"></div>
-          <!-- Stripe Card Element will be inserted here -->
+          <div class="steps">
+            <div class="step active" id="step-1">
+              <span class="step-num">1</span>
+              <span>Booking</span>
+            </div>
+            <div class="step" id="step-2">
+              <span class="step-num">2</span>
+              <span>Payment</span>
+            </div>
+            <div class="step" id="step-3">
+              <span class="step-num">✓</span>
+              <span>Done</span>
+            </div>
+          </div>
+
+          <h1>Book Your Car Wash</h1>
+          <p class="subtitle">Complete your booking and payment securely</p>
+
+          <form id="booking-form">
+            <!-- Auth Token -->
+            <div class="collapsible" id="auth-section">
+              <div class="collapsible-header" onclick="toggleCollapsible('auth-section')">
+                <span>🔐 Authentication</span>
+                <span class="collapsible-arrow">▼</span>
+              </div>
+              <div class="collapsible-content">
+                <div class="form-group">
+                  <label for="jwt_token">JWT Token</label>
+                  <input
+                    type="text"
+                    id="jwt_token"
+                    name="jwt_token"
+                    value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZ21haWwuY29tIiwic3ViIjoiY21peTBla293MDAwMDcyaHM0bzBiMGo2dCIsImlhdCI6MTc2NTI1MTE5MiwiZXhwIjoxNzY1MzM3NTkyfQ.CdTZh0Sbj0DVJeU-0yebMN-k4owSaJQ_L8j92-QDsPI"
+                    required
+                    placeholder="Paste your JWT token here"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Details -->
+            <div class="form-group">
+              <label for="service_id">Service ID</label>
+              <input
+                type="text"
+                id="service_id"
+                name="service_id"
+                value="cmiy0mtzn000772hsx6ce9cxc"
+                required
+                placeholder="e.g., cme427ig10001ws6ce6o16ztx"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="time_slot_id">Time Slot ID</label>
+              <input
+                type="text"
+                id="time_slot_id"
+                name="time_slot_id"
+                required
+                placeholder="e.g., cme7xdpk3000rwsik3ivsrj53"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="carType">Car Type</label>
+                <select id="carType" name="carType" required>
+                  <option value="">Select type</option>
+                  <option value="Sedan">Sedan</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Truck">Truck</option>
+                  <option value="Van">Van</option>
+                  <option value="Hatchback">Hatchback</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="voucher_code">Voucher Code</label>
+                <input
+                  type="text"
+                  id="voucher_code"
+                  name="voucher_code"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
+            <div class="divider">
+              <span>Payment Details</span>
+            </div>
+
+            <!-- Stripe Card Element -->
+            <div class="form-group">
+              <label for="card-element">Card Information</label>
+              <div class="card-element-wrapper" id="card-wrapper">
+                <div id="card-element"></div>
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+              <span id="btn-text">Create Booking & Pay</span>
+              <div class="spinner" id="btn-spinner" style="display: none"></div>
+            </button>
+          </form>
+
+          <div id="payment-result"></div>
+
+          <!-- Test Cards Info -->
+          <div class="collapsible" id="test-cards-section" style="margin-top: 20px;">
+            <div class="collapsible-header" onclick="toggleCollapsible('test-cards-section')">
+              <span>💳 Test Card Numbers</span>
+              <span class="collapsible-arrow">▼</span>
+            </div>
+            <div class="collapsible-content test-cards">
+              <p>Use these test cards for Stripe:</p>
+              <ul>
+                <li><code>4242 4242 4242 4242</code> - Success</li>
+                <li><code>4000 0000 0000 0002</code> - Declined</li>
+                <li><code>4000 0025 0000 3155</code> - Requires auth</li>
+              </ul>
+              <p style="margin-top: 12px;">Use any future date for expiry, any 3 digits for CVC, and any 5 digits for ZIP.</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            Powered by <a href="https://stripe.com" target="_blank">Stripe</a>
+          </div>
         </div>
-
-        <button type="submit" id="submitBtn">Create Booking & Pay</button>
-      </form>
-
-      <div class="loading" id="loading">
-        <p>Creating booking and processing payment...</p>
       </div>
-
-      <div id="payment-result"></div>
     </div>
 
     <script>
-      const stripe = Stripe(
-        'pk_test_51RgIDjGbZdiSzPj89wef1vxHaK0jRa4fAUcYFU1KT1mhNBvhgmfwmUWLwaLuV8YEqpae9XdgIwi3cAwHaQ0bxniz00QSaaPJgY',
-      ); // Replace with your public key
-      const elements = stripe.elements(); // Initialize Stripe Elements
+      // Configuration
+      const API_BASE_URL = 'http://localhost:4001/api';
+      const STRIPE_PUBLIC_KEY = 'pk_test_51RgIDjGbZdiSzPj89wef1vxHaK0jRa4fAUcYFU1KT1mhNBvhgmfwmUWLwaLuV8YEqpae9XdgIwi3cAwHaQ0bxniz00QSaaPJgY';
 
-      // Create an instance of the card element
-      const card = elements.create('card');
-      card.mount('#card-element'); // Mount the card input element to the div with id 'card-element'
+      // Initialize Stripe
+      const stripe = Stripe(STRIPE_PUBLIC_KEY);
+      const elements = stripe.elements({
+        fonts: [
+          {
+            cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap',
+          },
+        ],
+      });
+
+      // Create card element with custom styling
+      const cardStyle = {
+        base: {
+          color: '#ffffff',
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '16px',
+          fontSmoothing: 'antialiased',
+          '::placeholder': {
+            color: '#8b95a5',
+          },
+        },
+        invalid: {
+          color: '#ff3d57',
+          iconColor: '#ff3d57',
+        },
+      };
+
+      const card = elements.create('card', { style: cardStyle });
+      card.mount('#card-element');
+
+      // Card element focus states
+      card.on('focus', () => {
+        document.getElementById('card-wrapper').classList.add('focused');
+      });
+
+      card.on('blur', () => {
+        document.getElementById('card-wrapper').classList.remove('focused');
+      });
+
+      // Collapsible toggle
+      function toggleCollapsible(id) {
+        document.getElementById(id).classList.toggle('open');
+      }
+
+      // Update step indicators
+      function updateSteps(currentStep) {
+        for (let i = 1; i <= 3; i++) {
+          const step = document.getElementById(`step-${i}`);
+          step.classList.remove('active', 'completed');
+          if (i < currentStep) {
+            step.classList.add('completed');
+          } else if (i === currentStep) {
+            step.classList.add('active');
+          }
+        }
+      }
+
+      // Show message
+      function showMessage(type, title, message, extra = '') {
+        const icons = {
+          success: '✓',
+          error: '✕',
+          info: 'i',
+        };
+
+        document.getElementById('payment-result').innerHTML = `
+          <div class="message ${type}">
+            <div class="message-icon">${icons[type]}</div>
+            <div class="message-content">
+              <h4>${title}</h4>
+              <p>${message}</p>
+              ${extra}
+            </div>
+          </div>
+        `;
+      }
+
+      // Set button loading state
+      function setLoading(isLoading) {
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+
+        btn.disabled = isLoading;
+        btnText.textContent = isLoading ? 'Processing...' : 'Create Booking & Pay';
+        btnSpinner.style.display = isLoading ? 'block' : 'none';
+      }
 
       // Handle form submission
-      document
-        .getElementById('booking-form')
-        .addEventListener('submit', async function (event) {
-          event.preventDefault();
+      document.getElementById('booking-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
 
-          // Show loading message
-          document.getElementById('loading').style.display = 'block';
+        const jwtToken = document.getElementById('jwt_token').value;
+        const serviceId = document.getElementById('service_id').value;
+        const timeSlotId = document.getElementById('time_slot_id').value;
+        const carType = document.getElementById('carType').value;
+        const voucherCode = document.getElementById('voucher_code').value;
 
-          const formData = new FormData(event.target);
-          const bookingData = {
-            service_id: formData.get('service_id'),
-            time_slot_id: formData.get('time_slot_id'),
-            carType: formData.get('carType'),
-            voucher_code: formData.get('voucher_code'),
-            jwt_token: formData.get('jwt_token'),
-          };
+        // Validate inputs
+        if (!jwtToken) {
+          showMessage('error', 'Authentication Required', 'Please enter your JWT token.');
+          toggleCollapsible('auth-section');
+          return;
+        }
 
-          try {
-            // Step 1: Call the backend to create booking and generate payment intent
-            const response = await fetch('http://localhost:4000/api/booking', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${bookingData.jwt_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                service_id: bookingData.service_id,
-                time_slot_id: bookingData.time_slot_id,
-                carType: bookingData.carType,
-                voucher_code: bookingData.voucher_code,
-              }),
-            });
+        setLoading(true);
+        updateSteps(2);
 
-            const result = await response.json();
+        try {
+          // Step 1: Create booking
+          showMessage('info', 'Creating Booking...', 'Please wait while we process your booking.');
 
-            if (result.success) {
-              // Step 2: Confirm the payment with Stripe using the payment intent
-              const { client_secret } = result.data.payment_intent;
+          const response = await fetch(`${API_BASE_URL}/booking`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${jwtToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              service_id: serviceId,
+              time_slot_id: timeSlotId,
+              carType: carType,
+              voucher_code: voucherCode || undefined,
+            }),
+          });
 
-              // Handle the Stripe payment confirmation
-              const { error, paymentIntent } = await stripe.confirmCardPayment(
-                client_secret,
-                {
-                  payment_method: {
-                    card: card, // Collect card details using Stripe Elements
-                  },
-                },
-              );
+          const result = await response.json();
 
-              if (error) {
-                document.getElementById('payment-result').innerHTML =
-                  `<div class="error">Error: ${error.message}</div>`;
-              } else if (paymentIntent.status === 'succeeded') {
-                document.getElementById('payment-result').innerHTML = `
-            <div class="success">
-              <h3>Payment Successful!</h3>
-              <p>Booking ID: ${result.data.id}</p>
-              <p>Amount: $${(paymentIntent.amount / 100).toFixed(2)}</p>
-            </div>
-          `;
-              }
-            } else {
-              document.getElementById('payment-result').innerHTML =
-                `<div class="error">Error: ${result.message}</div>`;
-            }
-          } catch (error) {
-            document.getElementById('payment-result').innerHTML =
-              `<div class="error">Error: ${error.message}</div>`;
-          } finally {
-            document.getElementById('loading').style.display = 'none';
+          if (!result.success) {
+            throw new Error(result.message || 'Failed to create booking');
           }
-        });
+
+          if (!result.data.payment_intent || !result.data.payment_intent.client_secret) {
+            throw new Error('Payment intent was not created. Please try again.');
+          }
+
+          showMessage('info', 'Processing Payment...', 'Confirming your card details with Stripe.');
+
+          // Step 2: Confirm payment with Stripe
+          const { error, paymentIntent } = await stripe.confirmCardPayment(
+            result.data.payment_intent.client_secret,
+            {
+              payment_method: {
+                card: card,
+              },
+            }
+          );
+
+          if (error) {
+            throw new Error(error.message);
+          }
+
+          if (paymentIntent.status === 'succeeded') {
+            updateSteps(3);
+            const receipt = `
+              <div class="receipt">
+                <div class="receipt-row">
+                  <span class="receipt-label">Booking ID</span>
+                  <span>${result.data.id}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Service</span>
+                  <span>${result.data.service?.name || 'N/A'}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Car Wash</span>
+                  <span>${result.data.car_wash_station?.name || 'N/A'}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Time</span>
+                  <span>${result.data.time_slot?.start_time || 'N/A'} - ${result.data.time_slot?.end_time || 'N/A'}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Total Paid</span>
+                  <span>$${(paymentIntent.amount / 100).toFixed(2)}</span>
+                </div>
+              </div>
+            `;
+            showMessage('success', 'Payment Successful! 🎉', 'Your car wash booking has been confirmed.', receipt);
+          } else if (paymentIntent.status === 'requires_action') {
+            showMessage('info', 'Additional Authentication Required', 'Please complete the authentication to finalize your payment.');
+          } else {
+            showMessage('info', 'Payment Processing', `Status: ${paymentIntent.status}. We'll notify you once confirmed.`);
+          }
+        } catch (error) {
+          updateSteps(1);
+          showMessage('error', 'Payment Failed', error.message);
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      // Open auth section by default
+      document.getElementById('auth-section').classList.add('open');
     </script>
   </body>
 </html>

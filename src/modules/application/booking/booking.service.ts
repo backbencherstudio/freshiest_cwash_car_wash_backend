@@ -6,10 +6,14 @@ import { StripePayment } from 'src/common/lib/Payment/stripe/StripePayment';
 import { TransactionRepository } from 'src/common/repository/transaction/transaction.repository';
 import appConfig from 'src/config/app.config';
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
+import { PushNotificationService } from 'src/common/lib/Firebase';
 
 @Injectable()
 export class BookingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pushNotificationService: PushNotificationService,
+  ) {}
 
   async previewBooking(userId: string, dto: CreateBookingDto) {
   try {
@@ -268,6 +272,27 @@ export class BookingService {
             transactionError,
           );
         }
+      }
+
+      // Send push notification to washer (car wash station owner)
+      try {
+        if (booking.car_wash_station?.user?.id) {
+          const washer = await this.prisma.user.findUnique({
+            where: { id: booking.car_wash_station.user.id },
+            select: { fcm_token: true },
+          });
+
+          if (washer?.fcm_token) {
+            await this.pushNotificationService.notifyNewBooking(
+              washer.fcm_token,
+              booking.user?.name || 'A customer',
+              booking.service?.name || 'a service',
+              booking.id,
+            );
+          }
+        }
+      } catch (notificationError) {
+        console.error('Error sending push notification:', notificationError);
       }
 
       return {
@@ -773,6 +798,26 @@ export class BookingService {
           },
         },
       });
+
+      // Send push notification to user if status changed
+      if (updateBookingDto.status && updateBookingDto.status !== existingBooking.status) {
+        try {
+          const bookingUser = await this.prisma.user.findUnique({
+            where: { id: existingBooking.user_id },
+            select: { fcm_token: true },
+          });
+
+          if (bookingUser?.fcm_token) {
+            await this.pushNotificationService.notifyBookingStatusChange(
+              bookingUser.fcm_token,
+              updateBookingDto.status,
+              booking.id,
+            );
+          }
+        } catch (notificationError) {
+          console.error('Error sending status change notification:', notificationError);
+        }
+      }
 
       return {
         success: true,

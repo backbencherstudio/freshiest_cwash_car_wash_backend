@@ -9,17 +9,22 @@ export class WithdrawController {
 
   @Get('weekly-income')
   async weeklyIncome(@Req() req: any) {
-    return this.withdrawService.getWeeklyIncome(req.user.id);
+    return this.withdrawService.getWeeklyIncome(req.user.userId);
   }
 
   @Get('available')
   async available(@Req() req: any) {
-    return this.withdrawService.getAvailableAmount(req.user.id);
+    return this.withdrawService.getAvailableAmount(req.user.userId);
   }
 
   @Post('request')
   async request(@Req() req: any, @Body() body: { amount: number; via?: string }) {
-    return this.withdrawService.requestWithdraw(req.user.id, Number(body.amount), body.via);
+    return this.withdrawService.requestWithdraw(req.user.userId, Number(body.amount), body.via);
+  }
+
+  @Get('history')
+  async history(@Req() req: any, @Query('status') status?: string) {
+    return this.withdrawService.getWithdrawHistory(req.user.userId, status);
   }
 }
 

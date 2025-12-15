@@ -218,11 +218,19 @@ export class AuthService {
     }
   }
 
-  async login({ email, userId }) {
+  async login({ email, userId, fcm_token }: { email: string; userId: string; fcm_token?: string }) {
     try {
       const payload = { email: email, sub: userId };
       const token = this.jwtService.sign(payload);
       const user = await UserRepository.getUserDetails(userId);
+
+      // Save FCM token if provided
+      if (fcm_token) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { fcm_token },
+        });
+      }
 
       return {
         success: true,
@@ -246,11 +254,13 @@ export class AuthService {
     email,
     password,
     type,
+    fcm_token,
   }: {
     name: string;
     email: string;
     password: string;
     type?: string;
+    fcm_token?: string;
   }) {
     try {
       // Check if email already exist
@@ -295,6 +305,14 @@ export class AuthService {
           data: {
             billing_id: stripeCustomer.id,
           },
+        });
+      }
+
+      // Save FCM token if provided
+      if (fcm_token) {
+        await this.prisma.user.update({
+          where: { id: user.data.id },
+          data: { fcm_token },
         });
       }
 
@@ -737,4 +755,44 @@ export class AuthService {
     }
   }
   // --------- end 2FA ---------
+
+  // --------- FCM Token ---------
+  async updateFcmToken(userId: string, fcmToken: string) {
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { fcm_token: fcmToken },
+      });
+
+      return {
+        success: true,
+        message: 'FCM token updated successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+
+  async removeFcmToken(userId: string) {
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { fcm_token: null },
+      });
+
+      return {
+        success: true,
+        message: 'FCM token removed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+  }
+  // --------- end FCM Token ---------
 }

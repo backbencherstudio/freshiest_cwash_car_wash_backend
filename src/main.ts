@@ -5,7 +5,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { join } from 'path';
-// import express from 'express';
 // internal imports
 import { AppModule } from './app.module';
 import appConfig from './config/app.config';
@@ -16,9 +15,6 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
-
-  // Handle raw body for webhooks
-  // app.use('/payment/stripe/webhook', express.raw({ type: 'application/json' }));
 
   app.setGlobalPrefix('api');
   app.enableCors();

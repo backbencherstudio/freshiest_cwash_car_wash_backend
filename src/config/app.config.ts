@@ -62,6 +62,10 @@ export default () => ({
     },
   },
 
+  firebase: {
+    serviceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+  },
+
   /**
    * Storage directory
    */

@@ -9,7 +9,8 @@ const Stripe = new stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2025-03-31.basil',
 });
 
-const STRIPE_WEBHOOK_SECRET = appConfig().payment.stripe.webhook_secret;
+const STRIPE_WEBHOOK_SECRET = appConfig().payment.stripe.webhook_secret?.trim();
+
 /**
  * Stripe payment method helper
  */
