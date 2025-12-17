@@ -4,6 +4,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { StripePayment } from 'src/common/lib/Payment/stripe/StripePayment';
 import { TransactionRepository } from 'src/common/repository/transaction/transaction.repository';
+import { NotificationRepository } from 'src/common/repository/notification/notification.repository';
 import appConfig from 'src/config/app.config';
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 import { PushNotificationService } from 'src/common/lib/Firebase';
@@ -282,6 +283,16 @@ export class BookingService {
             select: { fcm_token: true },
           });
 
+          // Create notification in database
+          await NotificationRepository.createNotification({
+            sender_id: user_id,
+            receiver_id: booking.car_wash_station.user.id,
+            text: `New booking from ${booking.user?.name || 'A customer'} for ${booking.service?.name || 'a service'}`,
+            type: 'booking',
+            entity_id: booking.id,
+          });
+
+          // Send push notification if FCM token exists
           if (washer?.fcm_token) {
             await this.pushNotificationService.notifyNewBooking(
               washer.fcm_token,
@@ -807,6 +818,16 @@ export class BookingService {
             select: { fcm_token: true },
           });
 
+          // Create notification in database
+          await NotificationRepository.createNotification({
+            sender_id: userId,
+            receiver_id: existingBooking.user_id,
+            text: `Your booking status has been changed to ${updateBookingDto.status}`,
+            type: 'booking',
+            entity_id: booking.id,
+          });
+
+          // Send push notification if FCM token exists
           if (bookingUser?.fcm_token) {
             await this.pushNotificationService.notifyBookingStatusChange(
               bookingUser.fcm_token,
