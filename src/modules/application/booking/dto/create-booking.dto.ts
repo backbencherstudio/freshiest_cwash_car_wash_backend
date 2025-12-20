@@ -76,4 +76,13 @@ export class CreateBookingDto {
     @IsOptional()
     @IsString()
     voucher_code?: string; // Optional voucher code for discount
+
+    // user's geo at the time of booking
+    @IsOptional()
+    @IsNumber({ allowNaN: false, maxDecimalPlaces: 8 })
+    user_latitude?: number;
+
+    @IsOptional()
+    @IsNumber({ allowNaN: false, maxDecimalPlaces: 8 })
+    user_longitude?: number;
 }
