@@ -484,6 +484,9 @@ model Booking {
   time_slot_id             String
   carType                  String? // e.g., 'Sedan', 'SUV', 'Truck'
   bookingDate              DateTime
+  // user's geo at the time of booking (optional)
+  user_latitude            Float?
+  user_longitude           Float?
   total_amount             Decimal?
   status                   String   @default("pending") // e.g., 'Pending', 'Completed', 'Cancelled'
   payment_status           String?  @default("pending")

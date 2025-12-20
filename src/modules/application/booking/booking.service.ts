@@ -152,6 +152,8 @@ export class BookingService {
           status: createBookingDto.status,
           payment_status: createBookingDto.payment_status,
           payment_raw_status: createBookingDto.payment_raw_status,
+          user_latitude: createBookingDto.user_latitude,
+          user_longitude: createBookingDto.user_longitude,
           paid_amount: createBookingDto.paid_amount,
           paid_currency: createBookingDto.paid_currency,
           payment_provider: createBookingDto.payment_provider,
@@ -178,6 +180,8 @@ export class BookingService {
           payment_reference_number: true,
           payment_provider_charge_type: true,
           payment_provider_charge: true,
+          user_latitude: true,
+          user_longitude: true,
           created_at: true,
           updated_at: true,
           user: {
@@ -292,9 +296,11 @@ export class BookingService {
             entity_id: booking.id,
           });
 
+          console.log("washer fcm token", washer.fcm_token);
+
           // Send push notification if FCM token exists
           if (washer?.fcm_token) {
-            await this.pushNotificationService.notifyNewBooking(
+             await this.pushNotificationService.notifyNewBooking(
               washer.fcm_token,
               booking.user?.name || 'A customer',
               booking.service?.name || 'a service',
@@ -401,6 +407,8 @@ export class BookingService {
           status: true,
           payment_status: true,
           paid_amount: true,
+          user_latitude: true,
+          user_longitude: true,
           created_at: true,
           time_slot: {
             select: {
@@ -544,6 +552,8 @@ export class BookingService {
           payment_reference_number: true,
           payment_provider_charge_type: true,
           payment_provider_charge: true,
+          user_latitude: true,
+          user_longitude: true,
           created_at: true,
           updated_at: true,
           user: {
