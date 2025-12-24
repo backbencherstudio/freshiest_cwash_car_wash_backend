@@ -296,8 +296,6 @@ export class BookingService {
             entity_id: booking.id,
           });
 
-          console.log("washer fcm token", washer.fcm_token);
-
           // Send push notification if FCM token exists
           if (washer?.fcm_token) {
              await this.pushNotificationService.notifyNewBooking(
