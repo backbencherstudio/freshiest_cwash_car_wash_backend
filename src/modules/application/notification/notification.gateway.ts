@@ -9,8 +9,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { NotificationService } from './notification.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { OnModuleInit } from '@nestjs/common';
 import appConfig from 'src/config/app.config';
 import Redis from 'ioredis';
@@ -104,31 +102,33 @@ export class NotificationGateway
     }
   }
 
-  @SubscribeMessage('createNotification')
-  create(@MessageBody() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.create(createNotificationDto);
+  @SubscribeMessage('getNotifications')
+  getNotifications(@MessageBody() payload: any) {
+    const { userId, page = 1, limit = 20, isRead } = payload || {};
+    return this.notificationService.getUserNotifications(userId, page, limit, isRead);
   }
 
-  @SubscribeMessage('findAllNotification')
-  findAll() {
-    return this.notificationService.findAll();
+  @SubscribeMessage('getNotification')
+  getNotification(@MessageBody() payload: any) {
+    const { id, userId } = payload || {};
+    return this.notificationService.getNotification(id, userId);
   }
 
-  @SubscribeMessage('findOneNotification')
-  findOne(@MessageBody() id: number) {
-    return this.notificationService.findOne(id);
+  @SubscribeMessage('getUnreadCount')
+  getUnreadCount(@MessageBody() payload: any) {
+    const { userId } = payload || {};
+    return this.notificationService.getUnreadCount(userId);
   }
 
-  @SubscribeMessage('updateNotification')
-  update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationService.update(
-      updateNotificationDto.id,
-      updateNotificationDto,
-    );
+  @SubscribeMessage('markAsRead')
+  markAsRead(@MessageBody() payload: any) {
+    const { id, userId } = payload || {};
+    return this.notificationService.markAsRead(id, userId);
   }
 
-  @SubscribeMessage('removeNotification')
-  remove(@MessageBody() id: number) {
-    return this.notificationService.remove(id);
+  @SubscribeMessage('markAllAsRead')
+  markAllAsRead(@MessageBody() payload: any) {
+    const { userId } = payload || {};
+    return this.notificationService.markAllAsRead(userId);
   }
 }
