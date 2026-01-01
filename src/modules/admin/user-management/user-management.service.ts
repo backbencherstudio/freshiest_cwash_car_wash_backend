@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { SojebStorage } from 'src/common/lib/Disk/SojebStorage';
 import appConfig from 'src/config/app.config';
+import { PushNotificationService } from 'src/common/lib/Firebase';
+import { NotificationRepository } from 'src/common/repository/notification/notification.repository';
 
 type FindOpts = {
   page?: number;
@@ -13,7 +15,10 @@ type FindOpts = {
 
 @Injectable()
 export class UserManagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pushNotificationService: PushNotificationService,
+  ) {}
 
   // returns { total, page, pageSize, data: UserListItem[] }
   async findAll(opts: FindOpts) {
@@ -24,20 +29,13 @@ export class UserManagementService {
     // build where as a conjunction of clauses
     const ands: any[] = [];
 
-    // role filter: washers = users that own at least one CarWashStation
+    // role filter: only type-based
     if (opts.role === 'washers') {
-      // Prefer role-based identification if you assign a Role (name === 'washer').
-      // Fallback to `type === 'vendor'` and lastly to owning a station.
-      ands.push({
-        OR: [
-          { roles: { some: { name: 'washer' } } }, // users with Role.name = 'washer'
-          { type: 'vendor' },                       // users with type 'vendor' (if used)
-          { car_wash_station: { some: {} } },       // owners of stations (fallback)
-        ],
-      });
+      ands.push({ type: 'washer' });
+    } else if (opts.role === 'user') {
+      ands.push({ type: 'user' });
     } else {
-      // keep default behavior for 'user' tab (exclude deleted)
-      // no extra clause needed here (the default deleted filter is applied below)
+      // keep default behavior for 'all' tab (exclude deleted)
     }
 
     // status filter
@@ -78,11 +76,19 @@ export class UserManagementService {
           first_name: true,
           last_name: true,
           email: true,
+          email_verified_at: true,
           phone_number: true,
           avatar: true,
           created_at: true,
           status: true,
           deleted_at: true,
+          type: true,
+          car_wash_station: {
+            select: {
+              rating: true,
+              reviewCount: true,
+            },
+          },
         },
       }),
     ]);
@@ -92,6 +98,11 @@ export class UserManagementService {
         u.name || [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown';
       const status =
         u.deleted_at ? 'deleted' : u.status === 0 ? 'suspended' : 'active';
+      const isWasher = u.type === 'washer';
+      const ratingLabel = isWasher && u.car_wash_station
+        ? `${(u.car_wash_station.rating ?? 0).toFixed(1)} (${u.car_wash_station.reviewCount ?? 0} reviews)`
+        : null;
+      const verification = u.email_verified_at ? 'verified' : 'unverified';
       return {
         id: u.id,
         name: displayName,
@@ -100,6 +111,8 @@ export class UserManagementService {
         email: u.email || '',
         avatar: u.avatar || null,
         status,
+        verification: isWasher ? verification : null,
+        rating: isWasher ? ratingLabel : null,
       };
     });
 
@@ -194,5 +207,47 @@ export class UserManagementService {
     });
 
     return { success: true, message: 'User deleted' };
+  }
+
+  async sendAdminAlert(
+    userId: string,
+    payload: { title: string; body: string; data?: Record<string, string> },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, fcm_token: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.fcm_token) {
+      return {
+        success: false,
+        message: 'No FCM token found for this user',
+      };
+    }
+
+    // store notification for inbox/history
+    await NotificationRepository.createNotification({
+      sender_id: null,
+      receiver_id: user.id,
+      text: payload.body,
+      type: 'message',
+      entity_id: null,
+    });
+
+    const res = await this.pushNotificationService.sendToDevice(user.fcm_token, {
+      title: payload.title,
+      body: payload.body,
+      data: payload.data,
+    });
+
+    return {
+      success: res.success,
+      message: res.success ? 'Notification sent' : res.error || 'Failed to send notification',
+      messageId: res.messageId,
+    };
   }
 }

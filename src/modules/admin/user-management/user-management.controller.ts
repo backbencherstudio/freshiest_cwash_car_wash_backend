@@ -16,6 +16,9 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guard/role/roles.guard';
 import { Roles } from 'src/common/guard/role/roles.decorator';
 import { Role } from 'src/common/guard/role/role.enum';
+import { plainToInstance } from 'class-transformer';
+import { validateOrReject } from 'class-validator';
+import { SendAlertDto } from './dto/send-alert.dto';
 
 @Controller('dashboard/user-management')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -63,5 +66,17 @@ export class UserManagementController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.userManagementService.remove(id);
+  }
+
+  // POST /user-management/:id/notify - send admin alert to user via push
+  @Post(':id/notify')
+  async notifyUser(@Param('id') id: string, @Body() body: SendAlertDto) {
+   
+
+    return this.userManagementService.sendAdminAlert(id, {
+      title: body.title,
+      body: body.body,
+      data: body.data,
+    });
   }
 }

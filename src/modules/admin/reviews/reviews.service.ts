@@ -90,7 +90,7 @@ export class ReviewsService {
         review: {
           rating: review.rating,
           serviceType: 'Regular Wash', // Placeholder
-          date: review.createdAt.toISOString().split('T')[0], // 2025-08-19 format
+          date: review.created_at.toISOString().split('T')[0], // 2025-08-19 format
           title: this.generateReviewTitle(review.rating),
           content: review.comment || 'No comment provided.',
         },

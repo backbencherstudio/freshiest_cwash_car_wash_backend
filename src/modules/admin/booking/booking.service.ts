@@ -58,9 +58,9 @@ export class BookingService {
                 ];
             }
 
-            // Add status filter - map the 4 tabs exactly
+            // Add status filter - map the 4 tabs exactly (case-insensitive)
             if (status) {
-                switch (status) {
+                switch (status.toLowerCase()) {
                     case 'all':
                         // No status filter - show all
                         break;
